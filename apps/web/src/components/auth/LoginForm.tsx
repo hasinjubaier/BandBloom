@@ -321,7 +321,7 @@ export function LoginForm() {
         <p className="pt-2 text-center text-sm text-[#67839A]">
           New to BandBloom?{" "}
           <Link
-            href="/onboarding"
+            href="/signup"
             className="font-semibold text-[#159E98] hover:text-[#123A5B] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#159E98] rounded px-1 py-0.5"
           >
             Create an account
