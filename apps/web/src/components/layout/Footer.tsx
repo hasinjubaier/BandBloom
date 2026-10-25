@@ -23,6 +23,15 @@ export const Footer: React.FC = () => {
           <div className="sm:col-span-2 lg:col-span-4 space-y-4">
             <Link
               href="/"
+              onClick={(e) => {
+                if (typeof window !== "undefined" && window.location.pathname === "/") {
+                  e.preventDefault();
+                  if (window.location.hash) {
+                    window.history.replaceState(null, "", window.location.pathname + window.location.search);
+                  }
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }
+              }}
               className="inline-flex items-center gap-2.5 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] rounded-xl"
               aria-label={isBn ? "BandBloom মূলপাতা" : "BandBloom Home"}
             >

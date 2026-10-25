@@ -1,9 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
 import {
   BrainCircuit,
   GraduationCap,
@@ -19,48 +18,53 @@ import {
 import { useLanguage } from "@/context/LanguageContext";
 import { useTheme } from "@/context/ThemeContext";
 import { ScoreCalculatorModal } from "@/components/ui/ScoreCalculatorModal";
+import { useLandingNavigation } from "@/hooks/useLandingNavigation";
 
 export const Navbar: React.FC = () => {
-  const pathname = usePathname();
   const { language, setLanguage, t } = useLanguage();
   const { theme, toggleTheme } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [calcOpen, setCalcOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState<string>("home");
+
+  const {
+    isHomePage,
+    activeSection,
+    handleHomeClick,
+    handleSectionClick,
+  } = useLandingNavigation();
 
   const isBn = language === "bn";
-  const isHomePage = pathname === "/";
 
   // Section links matching the actual landing page structure
   const navItems = [
     {
       id: "home",
-      href: isHomePage ? "#home" : "/#home",
+      href: "/",
       label: isBn ? "মূলপাতা" : "Home",
     },
     {
       id: "how-it-works",
-      href: isHomePage ? "#how-it-works" : "/#how-it-works",
+      href: "/#how-it-works",
       label: isBn ? "কীভাবে কাজ করে" : "How It Works",
     },
     {
       id: "free-lessons",
-      href: isHomePage ? "#free-lessons" : "/#free-lessons",
+      href: "/#free-lessons",
       label: isBn ? "লেসন" : "Lessons",
     },
     {
       id: "weekly-mock-tests",
-      href: isHomePage ? "#weekly-mock-tests" : "/#weekly-mock-tests",
+      href: "/#weekly-mock-tests",
       label: isBn ? "মক টেস্ট" : "Mock Tests",
     },
     {
       id: "study-plan",
-      href: isHomePage ? "#study-plan" : "/#study-plan",
+      href: "/#study-plan",
       label: isBn ? "স্টাডি প্ল্যান" : "Study Plan",
     },
     {
       id: "ai-tutor",
-      href: isHomePage ? "#ai-tutor" : "/#ai-tutor",
+      href: "/#ai-tutor",
       label: isBn ? "AI গৃহশিক্ষক" : "AI Tutor",
     },
   ];
@@ -72,38 +76,6 @@ export const Navbar: React.FC = () => {
     { href: "/mock-centre", label: t.nav.mockCentre, icon: GraduationCap },
     { href: "/tutor", label: t.nav.tutor, icon: BrainCircuit },
   ];
-
-  // Track active section as learner scrolls
-  useEffect(() => {
-    if (pathname !== "/") return;
-
-    const sectionIds = [
-      "home",
-      "how-it-works",
-      "free-lessons",
-      "weekly-mock-tests",
-      "study-plan",
-      "ai-tutor",
-    ];
-
-    const handleScroll = () => {
-      const scrollPosition = window.scrollY + 140;
-      for (let i = sectionIds.length - 1; i >= 0; i--) {
-        const el = document.getElementById(sectionIds[i]);
-        if (el) {
-          const top = el.offsetTop;
-          if (scrollPosition >= top) {
-            setActiveSection(sectionIds[i]);
-            return;
-          }
-        }
-      }
-      setActiveSection("home");
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [pathname]);
 
   const isActive = (id: string) => {
     if (isHomePage) {
@@ -124,8 +96,8 @@ export const Navbar: React.FC = () => {
             {/* Logo */}
             <div className="flex items-center gap-6 xl:gap-8">
               <Link
-                href={isHomePage ? "#home" : "/#home"}
-                onClick={() => setActiveSection("home")}
+                href="/"
+                onClick={handleHomeClick}
                 className="flex items-center gap-2.5 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] rounded-xl"
                 aria-label={isBn ? "BandBloom মূলপাতা" : "BandBloom Home"}
               >
@@ -161,7 +133,13 @@ export const Navbar: React.FC = () => {
                     <Link
                       key={item.id}
                       href={item.href}
-                      onClick={() => setActiveSection(item.id)}
+                      onClick={(e) => {
+                        if (item.id === "home") {
+                          handleHomeClick(e);
+                        } else {
+                          handleSectionClick(item.id, e);
+                        }
+                      }}
                       className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] ${
                         active
                           ? "bg-[#E8F7F4] dark:bg-[#174A48] text-[#25A995] border border-[#25A995]/30 font-semibold shadow-2xs"
@@ -316,8 +294,12 @@ export const Navbar: React.FC = () => {
                   <Link
                     key={item.id}
                     href={item.href}
-                    onClick={() => {
-                      setActiveSection(item.id);
+                    onClick={(e) => {
+                      if (item.id === "home") {
+                        handleHomeClick(e);
+                      } else {
+                        handleSectionClick(item.id, e);
+                      }
                       setMobileMenuOpen(false);
                     }}
                     className={`block px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
