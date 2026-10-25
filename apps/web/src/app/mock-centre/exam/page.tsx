@@ -20,6 +20,7 @@ export default function ComputerExamSimulatorPage() {
   const router = useRouter();
 
   // Test state
+  const [attemptId, setAttemptId] = useState<string>("99999999-9999-9999-9999-999999999991");
   const [secondsRemaining, setSecondsRemaining] = useState(3600); // 60 mins
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string>>({});
@@ -27,11 +28,41 @@ export default function ComputerExamSimulatorPage() {
   const [fontSize, setFontSize] = useState<"sm" | "base" | "lg">("base");
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [autoSavedNotice, setAutoSavedNotice] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const totalQuestions = 40; // Full 40 questions representation
+  const totalQuestions = 40;
   const sampleQuestions = MOCK_READING_PASSAGE.questions;
 
-  // Authoritative server timer simulation
+  // Initialize or resume attempt from server
+  useEffect(() => {
+    fetch("/api/exams/99999999-9999-9999-9999-999999999991/attempt", {
+      method: "POST",
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && data.attempt) {
+          setAttemptId(data.attempt.attemptId);
+          if (typeof data.attempt.secondsRemaining === "number") {
+            setSecondsRemaining(data.attempt.secondsRemaining);
+          }
+          if (data.answers) {
+            const restoredAnswers: Record<number, string> = {};
+            const restoredFlags: Record<number, boolean> = {};
+            Object.entries(data.answers).forEach(([qId, val]: [string, any], idx) => {
+              if (val?.answer) restoredAnswers[idx + 1] = val.answer;
+              if (val?.flagged) restoredFlags[idx + 1] = true;
+            });
+            if (Object.keys(restoredAnswers).length > 0) {
+              setAnswers((prev) => ({ ...prev, ...restoredAnswers }));
+              setFlagged((prev) => ({ ...prev, ...restoredFlags }));
+            }
+          }
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  // Server-authoritative timer countdown
   useEffect(() => {
     const timer = setInterval(() => {
       setSecondsRemaining((prev) => {
@@ -44,7 +75,7 @@ export default function ComputerExamSimulatorPage() {
       });
     }, 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [attemptId]);
 
   const formatTime = (secs: number) => {
     const m = Math.floor(secs / 60);
@@ -53,20 +84,56 @@ export default function ComputerExamSimulatorPage() {
   };
 
   const handleAnswer = (val: string) => {
-    setAnswers((prev) => ({ ...prev, [currentQuestionIdx + 1]: val }));
-    // Simulate auto-save
+    const qNum = currentQuestionIdx + 1;
+    setAnswers((prev) => ({ ...prev, [qNum]: val }));
     setAutoSavedNotice(true);
+
+    // Persist to server
+    const currentQuestionObj = sampleQuestions[currentQuestionIdx % sampleQuestions.length];
+    fetch(`/api/attempts/${attemptId}/save`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        questionId: currentQuestionObj.id || `q-${qNum}`,
+        answer: val,
+        flagged: !!flagged[qNum],
+      }),
+    }).catch(() => {});
   };
 
   const toggleFlag = () => {
+    const qNum = currentQuestionIdx + 1;
+    const nextFlag = !flagged[qNum];
     setFlagged((prev) => ({
       ...prev,
-      [currentQuestionIdx + 1]: !prev[currentQuestionIdx + 1],
+      [qNum]: nextFlag,
     }));
+
+    const currentQuestionObj = sampleQuestions[currentQuestionIdx % sampleQuestions.length];
+    fetch(`/api/attempts/${attemptId}/save`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        questionId: currentQuestionObj.id || `q-${qNum}`,
+        answer: answers[qNum] || "",
+        flagged: nextFlag,
+      }),
+    }).catch(() => {});
   };
 
-  const handleSubmitExam = () => {
-    router.push("/results/mock-1");
+  const handleSubmitExam = async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+
+    try {
+      const res = await fetch(`/api/attempts/${attemptId}/submit`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      router.push(data.redirectTo || `/results/${attemptId}`);
+    } catch {
+      router.push(`/results/${attemptId}`);
+    }
   };
 
   const currentQ =

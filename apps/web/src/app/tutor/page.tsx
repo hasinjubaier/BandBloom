@@ -47,13 +47,14 @@ export default function AITutorPage() {
     },
   ]);
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!inputMessage.trim() || inputMessage.length < 3) return;
 
+    const userText = inputMessage.trim();
     const userMsg: ChatMessage = {
       id: `usr-${Date.now()}`,
       sender: "user",
-      text: inputMessage,
+      text: userText,
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     };
 
@@ -61,55 +62,79 @@ export default function AITutorPage() {
     setInputMessage("");
     setIsTyping(true);
 
-    setTimeout(() => {
-      setIsTyping(false);
+    try {
+      const res = await fetch("/api/tutor/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: userText,
+          skill: selectedSkill,
+          language: tutorLanguage,
+        }),
+      });
 
-      // Determine RAG response simulation
-      let tutorText = "";
-      let citedSource = MOCK_RAG_SOURCES[0];
-      let confidence: "supported" | "limited" | "insufficient_evidence" = "supported";
+      const data = await res.json();
 
-      const lower = userMsg.text.toLowerCase();
-      if (lower.includes("round") || lower.includes("calculate") || lower.includes("রাউন্ডিং") || lower.includes("গড়")) {
-        citedSource = MOCK_RAG_SOURCES[2];
-        tutorText =
-          tutorLanguage === "bn"
-            ? "অফিসিয়াল নিয়মে (Section 5.3): চারটি দক্ষতার স্কোরের গড় যদি .২৫-এ শেষ হয়, তবে তা পরবর্তী হাফ ব্যান্ডে (যেমন: ৬.২৫ -> ৬.৫) রাউন্ড আপ হয়। আর যদি .৭৫-এ শেষ হয়, তবে তা পরবর্তী পূর্ণ ব্যান্ডে (যেমন: ৬.৭৫ -> ৭.০) উন্নীত হয়।"
-            : "Under official scoring regulations (Section 5.3): If the average of the 4 skill scores ends in .25, it is rounded up to the next half band (e.g., 6.25 -> 6.5). If it ends in .75, it is rounded up to the next full band (e.g., 6.75 -> 7.0).";
-      } else if (lower.includes("paper") || lower.includes("computer") || lower.includes("2026") || lower.includes("retake")) {
-        citedSource = MOCK_RAG_SOURCES[1];
-        tutorText =
-          tutorLanguage === "bn"
-            ? "মার্চ ২০২৬-এর অফিসিয়াল আপডেট অনুসারে কম্পিউটার-ডেলিভার্ড পরীক্ষাকে বিশ্বব্যাপী প্রাথমিক ডেলিভারি মোড করা হয়েছে। এর আওতায় প্রার্থীরা পরীক্ষার ৬০ দিনের মধ্যে যেকোনো একটি দুর্বল স্কিলের জন্য 'One Skill Retake' দিতে পারেন।"
-            : "According to official 2026 test delivery policies, Computer-Delivered IELTS is the primary global standard. Candidates are also eligible for 'One Skill Retake' within 60 days of their original test date to improve a single component.";
-      } else if (lower.includes("task 2") || lower.includes("coherence") || lower.includes("thesis")) {
-        citedSource = MOCK_RAG_SOURCES[0];
-        tutorText =
-          tutorLanguage === "bn"
-            ? "Writing Task 2-এ Coherence & Cohesion ৭+ পেতে হলে প্রতিটি বডি প্যারাগ্রাফে একক কেন্দ্রীয় ধারণা (Topic Sentence) রাখুন। মেকানিক্যাল সংযোগকারী শব্দের পুনরাবৃত্তি না করে সাবলীল প্রোনাউন রেফারেন্স ও প্যারাফ্র্যাজিং ব্যবহার করুন।"
-            : "To score 7.0+ in Task 2 Coherence & Cohesion, ensure clear progression throughout with a single central topic in each paragraph. Minimize mechanical linkers and emphasize lexical referencing and logical argumentation.";
-      } else {
-        tutorText =
-          tutorLanguage === "bn"
-            ? "আপনার প্রশ্নের উত্তর অনুসন্ধানে অফিসিয়াল সিলেবাস গাইডলাইন থেকে তথ্য সংগ্রহ করা হয়েছে। রুব্রিকের প্রতিটি শর্তপূরণ ও নির্দিষ্ট শব্দসীমা মেনে উত্তর লিখুন।"
-            : "Based on official IELTS descriptors, high-scoring candidates consistently fulfill all parts of the task while adhering to required time and word count limits.";
+      if (!res.ok || !data.success) {
+        const errorMsg: ChatMessage = {
+          id: `bot-${Date.now()}`,
+          sender: "tutor",
+          text: data.error || "The tutor service is temporarily unavailable. Please try again shortly.",
+          confidenceLabel: "insufficient_evidence",
+          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        };
+        setMessages((prev) => [...prev, errorMsg]);
+        return;
       }
 
       const botMsg: ChatMessage = {
-        id: `bot-${Date.now()}`,
+        id: data.requestId || `bot-${Date.now()}`,
         sender: "tutor",
-        text: tutorText,
-        confidenceLabel: confidence,
-        sources: [citedSource],
+        text: data.answer,
+        confidenceLabel: data.confidenceLabel || "supported",
+        sources: data.citedSources?.map((s: any) => ({
+          id: s.id,
+          title: s.title,
+          sourceUrl: s.sourceUrl || "#",
+          section: s.section || "General Guidance",
+          effectiveDate: "2026.1",
+          content: "",
+        })),
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       };
 
       setMessages((prev) => [...prev, botMsg]);
-    }, 1200);
+    } catch {
+      const errorMsg: ChatMessage = {
+        id: `bot-${Date.now()}`,
+        sender: "tutor",
+        text: "Network connection error while contacting AI Tutor. Please check your connection.",
+        confidenceLabel: "insufficient_evidence",
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      };
+      setMessages((prev) => [...prev, errorMsg]);
+    } finally {
+      setIsTyping(false);
+    }
   };
 
-  const handleReport = (msgId: string) => {
+  const handleReport = async (msgId: string) => {
     setReported((prev) => ({ ...prev, [msgId]: true }));
+    const targetMsg = messages.find((m) => m.id === msgId);
+    if (!targetMsg) return;
+
+    fetch("/api/tutor/report", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        requestId: msgId,
+        userQuery: "Reported message from chat history",
+        tutorResponse: targetMsg.text,
+        reason: "incorrect_facts",
+        userComment: "Reported by learner through UI",
+        citedSources: targetMsg.sources,
+      }),
+    }).catch(() => {});
   };
 
   return (

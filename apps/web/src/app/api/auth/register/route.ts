@@ -1,4 +1,11 @@
 import { NextResponse } from "next/server";
+import { query, withTransaction } from "@/server/db";
+import {
+  hashPassword,
+  createSession,
+  SESSION_COOKIE_NAME,
+  SESSION_EXPIRY_DAYS,
+} from "@/server/auth/session";
 
 export async function POST(request: Request) {
   try {
@@ -62,22 +69,72 @@ export async function POST(request: Request) {
       );
     }
 
-    // 6. Registration handling
-    // When a production identity provider (e.g. Supabase, NextAuth, or custom DB) is configured,
-    // persist user credentials here. In the current SaaS architecture without a third-party auth service,
-    // return structured success payload directing user into their personalized onboarding flow.
-    return NextResponse.json({
+    // 6. Check duplicate email in database
+    const existing = await query(`SELECT id FROM users WHERE email = $1`, [trimmedEmail]);
+    if (existing.rows.length > 0) {
+      return NextResponse.json(
+        { success: false, error: "An account with this email address already exists. Please sign in." },
+        { status: 409 }
+      );
+    }
+
+    // 7. Transactional user, profile & consent creation
+    const passwordHash = await hashPassword(password);
+
+    const newUser = await withTransaction(async (client) => {
+      const userRes = await client.query<{ id: string }>(
+        `INSERT INTO users (email, role, status, password_hash)
+         VALUES ($1, 'student', 'active', $2)
+         RETURNING id`,
+        [trimmedEmail, passwordHash]
+      );
+      const userId = userRes.rows[0].id;
+
+      // Profile record
+      await client.query(
+        `INSERT INTO profiles (user_id, full_name, test_type, target_band, target_date, daily_minutes, timezone, ui_language)
+         VALUES ($1, $2, 'academic', 7.5, CURRENT_DATE + INTERVAL '60 days', 60, 'UTC', 'en')`,
+        [userId, trimmedName]
+      );
+
+      // Legal terms & privacy consent
+      await client.query(
+        `INSERT INTO consents (user_id, type, policy_version, metadata)
+         VALUES ($1, 'terms_and_privacy', 'v2.0', $2)`,
+        [userId, JSON.stringify({ agreedVia: "registration_form", ip: request.headers.get("x-forwarded-for") || "127.0.0.1" })]
+      );
+
+      return { id: userId, email: trimmedEmail, name: trimmedName };
+    });
+
+    // 8. Establish session and set HTTP-only cookie
+    const { token, expiresAt } = await createSession(newUser.id, request);
+
+    const response = NextResponse.json({
       success: true,
       message: "Account created successfully! Preparing your IELTS onboarding journey...",
       user: {
-        name: trimmedName,
-        email: trimmedEmail,
+        id: newUser.id,
+        name: newUser.name,
+        email: newUser.email,
       },
       redirectTo: "/onboarding",
     });
-  } catch {
+
+    const isProd = process.env.NODE_ENV === "production";
+    response.cookies.set(SESSION_COOKIE_NAME, token, {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: "lax",
+      expires: expiresAt,
+      path: "/",
+    });
+
+    return response;
+  } catch (error: any) {
+    console.error("Registration error:", error);
     return NextResponse.json(
-      { success: false, error: "Invalid request payload or server error." },
+      { success: false, error: "Failed to create account due to server error. Please try again." },
       { status: 500 }
     );
   }

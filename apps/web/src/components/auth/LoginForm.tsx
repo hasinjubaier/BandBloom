@@ -64,30 +64,26 @@ export function LoginForm() {
     setGoogleInfoMessage(null);
 
     try {
-      // Simulate/perform authentication request
-      // In production, this connects to the configured auth endpoint / identity provider
-      await new Promise((resolve) => setTimeout(resolve, 650));
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim(), password }),
+      });
 
-      // Handle demo credentials or production auth provider
-      if (
-        email.toLowerCase().includes("student") ||
-        email.toLowerCase().includes("test") ||
-        email.toLowerCase().includes("demo") ||
-        email.toLowerCase().includes("admin")
-      ) {
-        setSuccessMessage("Sign in successful! Redirecting to your student dashboard...");
-        if (rememberMe && typeof window !== "undefined") {
-          localStorage.setItem("bandbloom_remember_email", email.trim());
-        }
-        setTimeout(() => {
-          router.push("/dashboard");
-        }, 600);
-      } else {
-        // Honest response if no active identity provider is attached to production API
-        setErrorMessage(
-          "No active account found with these credentials. Please check your details or click 'Create an account' below to begin."
-        );
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        setErrorMessage(data.error || "Invalid credentials. Please try again.");
+        return;
       }
+
+      setSuccessMessage(data.message || "Sign in successful! Redirecting to your dashboard...");
+      if (rememberMe && typeof window !== "undefined") {
+        localStorage.setItem("bandbloom_remember_email", email.trim());
+      }
+      setTimeout(() => {
+        router.push(data.redirectTo || "/dashboard");
+      }, 500);
     } catch {
       setErrorMessage("An unexpected network error occurred. Please check your connection and try again.");
     } finally {

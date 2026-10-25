@@ -23,8 +23,7 @@ function ResultsContent({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const { language } = useLanguage();
 
-  // Test results data
-  const testResults = {
+  const [testResults, setTestResults] = React.useState({
     examTitle: "BandBloom Academic Diagnostic Mock 1",
     date: "2026-10-20",
     testType: "Academic",
@@ -38,16 +37,30 @@ function ResultsContent({ params }: { params: Promise<{ id: string }> }) {
       listening: "33 / 40",
       reading: "35 / 40",
     },
-  };
+    rawAverage: 7.25,
+    overallBand: 7.5,
+  });
+
+  React.useEffect(() => {
+    fetch(`/api/attempts/${resolvedParams.id}/result`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && data.report) {
+          setTestResults(data.report);
+        }
+      })
+      .catch(() => {});
+  }, [resolvedParams.id]);
 
   const rawAverage =
+    testResults.rawAverage ||
     (testResults.scores.listening +
       testResults.scores.reading +
       testResults.scores.writing +
       testResults.scores.speaking) /
-    4.0;
+      4.0;
 
-  const roundedOverallBand = roundIELTSBand(rawAverage);
+  const roundedOverallBand = testResults.overallBand || roundIELTSBand(rawAverage);
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full space-y-10">
