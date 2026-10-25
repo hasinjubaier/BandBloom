@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
-  Sparkles,
   BrainCircuit,
   GraduationCap,
   Calculator,
@@ -129,8 +129,15 @@ export const Navbar: React.FC = () => {
                 className="flex items-center gap-2.5 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] rounded-xl"
                 aria-label={isBn ? "BandBloom মূলপাতা" : "BandBloom Home"}
               >
-                <div className="w-9 h-9 rounded-xl bg-[#25A995] flex items-center justify-center text-white shadow-md shadow-[#25A995]/25 group-hover:scale-105 transition-transform duration-200">
-                  <Sparkles className="w-5 h-5 text-white" aria-hidden="true" />
+                <div className="w-10 h-10 rounded-xl overflow-hidden bg-white dark:bg-[#123C3A] border border-[#D4E8E3] dark:border-[#205653] flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform duration-200 shrink-0">
+                  <Image
+                    src="/logo.webp"
+                    alt="BandBloom IELTS Logo"
+                    width={40}
+                    height={40}
+                    className="w-full h-full object-contain p-0.5"
+                    priority
+                  />
                 </div>
                 <div>
                   <span className="text-lg font-bold tracking-tight text-[#123C3A] dark:text-[#F4FAF8]">

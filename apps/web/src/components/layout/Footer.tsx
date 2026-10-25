@@ -2,7 +2,8 @@
 
 import React from "react";
 import Link from "next/link";
-import { Sparkles, ShieldCheck, CheckCircle2, ExternalLink } from "lucide-react";
+import Image from "next/image";
+import { ShieldCheck, CheckCircle2, ExternalLink } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 
 export const Footer: React.FC = () => {
@@ -25,8 +26,14 @@ export const Footer: React.FC = () => {
               className="inline-flex items-center gap-2.5 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] rounded-xl"
               aria-label={isBn ? "BandBloom মূলপাতা" : "BandBloom Home"}
             >
-              <div className="w-8 h-8 rounded-xl bg-[#25A995] flex items-center justify-center text-white shadow-md shadow-[#25A995]/20 group-hover:scale-105 transition-transform duration-200">
-                <Sparkles className="w-4 h-4 text-white" aria-hidden="true" />
+              <div className="w-9 h-9 rounded-xl overflow-hidden bg-white dark:bg-[#123C3A] border border-[#D4E8E3] dark:border-[#205653] flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform duration-200 shrink-0">
+                <Image
+                  src="/logo.webp"
+                  alt="BandBloom IELTS Logo"
+                  width={36}
+                  height={36}
+                  className="w-full h-full object-contain p-0.5"
+                />
               </div>
               <span className="text-xl font-bold tracking-tight text-[#123C3A] dark:text-[#F4FAF8]">
                 Band<span className="text-[#25A995]">Bloom</span>
