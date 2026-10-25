@@ -13,10 +13,14 @@ export interface AppShellProps {
 function AppShellInner({ children }: AppShellProps) {
   const pathname = usePathname();
   const isExamRoute = pathname?.startsWith("/mock-centre/exam");
+  const isAuthRoute =
+    pathname === "/login" ||
+    pathname === "/signup" ||
+    pathname === "/forgot-password";
 
-  // In full-screen CD-IELTS computer exam simulation, render a distraction-free layout
-  // with no marketing Navbar, no DisclaimerBanner, and no marketing Footer.
-  if (isExamRoute) {
+  // In full-screen exam simulation or dedicated auth flows (e.g. /login),
+  // render a focused layout without the marketing Navbar, DisclaimerBanner, or Footer.
+  if (isExamRoute || isAuthRoute) {
     return <main className="flex-1 flex flex-col">{children}</main>;
   }
 

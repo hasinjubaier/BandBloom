@@ -210,6 +210,14 @@ export const Navbar: React.FC = () => {
                 )}
               </button>
 
+              {/* Sign In link */}
+              <Link
+                href="/login"
+                className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-[#123C3A] dark:text-[#F4FAF8] hover:text-[#25A995] dark:hover:text-[#25A995] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995]"
+              >
+                {isBn ? "লগইন" : "Sign in"}
+              </Link>
+
               {/* Start Free Primary CTA */}
               <Link
                 href="/onboarding"
@@ -314,8 +322,8 @@ export const Navbar: React.FC = () => {
               })}
             </div>
 
-            {/* Mobile Start Free Button */}
-            <div className="pt-2 border-t border-[#D4E8E3] dark:border-[#205653]">
+            {/* Mobile Action Buttons */}
+            <div className="pt-2 border-t border-[#D4E8E3] dark:border-[#205653] space-y-2">
               <Link
                 href="/onboarding"
                 onClick={() => setMobileMenuOpen(false)}
@@ -323,6 +331,13 @@ export const Navbar: React.FC = () => {
               >
                 <span>{isBn ? "ফ্রি প্রস্তুতি শুরু করুন" : "Start Free Preparation"}</span>
                 <ArrowRight className="w-4 h-4" aria-hidden="true" />
+              </Link>
+              <Link
+                href="/login"
+                onClick={() => setMobileMenuOpen(false)}
+                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-white dark:bg-[#174A48] border border-[#D4E8E3] dark:border-[#205653] text-[#123C3A] dark:text-[#F4FAF8] text-sm font-semibold hover:border-[#25A995] transition-all"
+              >
+                <span>{isBn ? "লগইন করুন" : "Sign in to account"}</span>
               </Link>
             </div>
 
