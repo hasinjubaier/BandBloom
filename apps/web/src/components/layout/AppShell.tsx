@@ -29,7 +29,9 @@ function AppShellInner({ children }: AppShellProps) {
     pathname === "/vocabulary" ||
     pathname === "/notebook" ||
     pathname.startsWith("/results") ||
-    pathname === "/settings";
+    pathname === "/settings" ||
+    pathname === "/practice" ||
+    pathname === "/lessons";
 
   // Dedicated portal shell for authenticated student features
   if (isPortalRoute) {

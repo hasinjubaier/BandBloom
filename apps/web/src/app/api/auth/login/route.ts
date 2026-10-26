@@ -5,11 +5,12 @@ import {
   createSession,
   SESSION_COOKIE_NAME,
 } from "@/server/auth/session";
+import { getSafeRedirectUrl } from "@/lib/redirect";
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { email, password } = body;
+    const { email, password, redirect } = body;
 
     const trimmedEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
     if (!trimmedEmail || !password) {
@@ -72,8 +73,11 @@ export async function POST(request: Request) {
     // 3. Create session & set secure cookie
     const { token, expiresAt } = await createSession(user.id, request);
 
-    const url = new URL(request.url);
-    const customRedirect = url.searchParams.get("redirect") || "/dashboard";
+    const candidateRedirect =
+      typeof redirect === "string" && redirect
+        ? redirect
+        : new URL(request.url).searchParams.get("redirect") || "/dashboard";
+    const safeRedirect = getSafeRedirectUrl(candidateRedirect, "/dashboard");
 
     const response = NextResponse.json({
       success: true,
@@ -84,7 +88,7 @@ export async function POST(request: Request) {
         name: user.full_name || "Learner",
         role: user.role,
       },
-      redirectTo: customRedirect,
+      redirectTo: safeRedirect,
     });
 
     const isProd = process.env.NODE_ENV === "production";

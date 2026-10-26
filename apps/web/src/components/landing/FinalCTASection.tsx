@@ -51,10 +51,10 @@ export function FinalCTASection() {
           {/* Two CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6">
             <Link
-              href="/onboarding"
+              href="/signup"
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-[#25A995] hover:bg-[#123C3A] text-white font-semibold text-base shadow-lg shadow-[#25A995]/25 border border-transparent transition-all duration-200 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] focus-visible:ring-offset-2 motion-safe:hover:-translate-y-0.5 active:translate-y-0"
             >
-              <span>{isBn ? "ফ্রি প্রস্তুতি শুরু করুন" : "Start Free Preparation"}</span>
+              <span>{isBn ? "অ্যাকাউন্ট তৈরি করুন" : "Create Account to Begin"}</span>
               <ArrowRight
                 className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200"
                 aria-hidden="true"
@@ -62,10 +62,10 @@ export function FinalCTASection() {
             </Link>
 
             <Link
-              href="/lessons"
+              href="/login"
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-4 rounded-xl bg-white dark:bg-[#0A1C1B] hover:bg-[#F4FAF8] dark:hover:bg-[#174A48] border border-[#D4E8E3] dark:border-[#205653] text-[#123C3A] dark:text-[#F4FAF8] font-semibold text-base transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] focus-visible:ring-offset-2 shadow-2xs motion-safe:hover:-translate-y-0.5"
             >
-              <span>{isBn ? "ফ্রি লেসনগুলো দেখুন" : "Explore Free Lessons"}</span>
+              <span>{isBn ? "লগইন করুন" : "Sign In to Portal"}</span>
             </Link>
           </div>
 
@@ -74,8 +74,8 @@ export function FinalCTASection() {
             <ShieldCheck className="w-4 h-4 text-[#25A995] shrink-0" aria-hidden="true" />
             <span>
               {isBn
-                ? "ফ্রি IELTS প্রস্তুতি · স্বাধীন প্ল্যাটফর্ম, কোনো অফিসিয়াল IELTS সার্ভিস নয়।"
-                : "Free IELTS preparation · Independent platform, not an official IELTS service."}
+                ? "IELTS প্রস্তুতি · স্বাধীন প্ল্যাটফর্ম, কোনো অফিসিয়াল IELTS সার্ভিস নয়।"
+                : "IELTS preparation · Independent platform, not an official IELTS service."}
             </span>
           </div>
         </div>

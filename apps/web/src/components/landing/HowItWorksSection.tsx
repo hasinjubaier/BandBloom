@@ -223,10 +223,10 @@ export function HowItWorksSection() {
 
           <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3.5">
             <Link
-              href="/onboarding"
+              href="/signup"
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#25A995] hover:bg-[#123C3A] text-white font-semibold text-xs sm:text-sm shadow-md shadow-[#25A995]/20 border border-transparent transition-all group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] focus-visible:ring-offset-2"
             >
-              <span>{isBn ? "ফ্রি অনুশীলন শুরু করুন" : "Start Free Practice"}</span>
+              <span>{isBn ? "প্রস্তুতি শুরু করুন" : "Create Account to Start"}</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" aria-hidden="true" />
             </Link>
 

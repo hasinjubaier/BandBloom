@@ -29,9 +29,13 @@ export const Navbar: React.FC = () => {
       .then((data) => {
         if (data && data.authenticated) {
           setIsAuthenticated(true);
+        } else {
+          setIsAuthenticated(false);
         }
       })
-      .catch(() => {});
+      .catch(() => {
+        setIsAuthenticated(false);
+      });
   }, []);
 
   const {
@@ -228,10 +232,10 @@ export const Navbar: React.FC = () => {
                   </Link>
 
                   <Link
-                    href="/onboarding"
+                    href="/signup"
                     className="px-4 py-2 rounded-xl bg-[#25A995] hover:bg-[#123C3A] text-white text-xs sm:text-sm font-semibold shadow-md shadow-[#25A995]/25 border border-transparent transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] focus-visible:ring-offset-2 motion-safe:hover:-translate-y-0.5 active:translate-y-0 flex items-center gap-1.5"
                   >
-                    <span>{isBn ? "ফ্রি শুরু করুন" : "Start Free"}</span>
+                    <span>{isBn ? "সাইন আপ" : "Sign Up"}</span>
                     <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
                   </Link>
                 </>
@@ -346,19 +350,19 @@ export const Navbar: React.FC = () => {
               ) : (
                 <>
                   <Link
-                    href="/onboarding"
+                    href="/login"
                     onClick={() => setMobileMenuOpen(false)}
                     className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[#25A995] hover:bg-[#123C3A] text-white text-sm font-semibold shadow-md shadow-[#25A995]/25 transition-all"
                   >
-                    <span>{isBn ? "ফ্রি প্রস্তুতি শুরু করুন" : "Start Free Preparation"}</span>
+                    <span>{isBn ? "লগইন করুন" : "Sign in to account"}</span>
                     <ArrowRight className="w-4 h-4" aria-hidden="true" />
                   </Link>
                   <Link
-                    href="/login"
+                    href="/signup"
                     onClick={() => setMobileMenuOpen(false)}
                     className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-white dark:bg-[#174A48] border border-[#D4E8E3] dark:border-[#205653] text-[#123C3A] dark:text-[#F4FAF8] text-sm font-semibold hover:border-[#25A995] transition-all"
                   >
-                    <span>{isBn ? "লগইন করুন" : "Sign in to account"}</span>
+                    <span>{isBn ? "অ্যাকাউন্ট তৈরি করুন" : "Create Account"}</span>
                   </Link>
                 </>
               )}

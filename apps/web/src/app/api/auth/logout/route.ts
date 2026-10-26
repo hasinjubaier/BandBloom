@@ -15,12 +15,16 @@ export async function POST(request: Request) {
     const response = NextResponse.json({
       success: true,
       message: "Signed out successfully.",
-      redirectTo: "/login",
+      redirectTo: "/",
     });
 
+    const isProd = process.env.NODE_ENV === "production";
     response.cookies.set(SESSION_COOKIE_NAME, "", {
       httpOnly: true,
+      secure: isProd,
+      sameSite: "lax",
       expires: new Date(0),
+      maxAge: 0,
       path: "/",
     });
 

@@ -103,13 +103,19 @@ export default function HowItWorksPage() {
         <p className="text-xs text-[#3D6462] dark:text-[#A0C5C1] max-w-xl mx-auto">
           Identify your current reading and listening strengths today without subscription barriers or commercial commitments.
         </p>
-        <div>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
           <Link
-            href="/onboarding"
+            href="/login"
             className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#25A995] hover:bg-[#123C3A] text-white font-semibold text-xs shadow-lg shadow-[#25A995]/20 transition-all"
           >
-            <span>Start Free Diagnostic</span>
+            <span>Sign In to Begin Diagnostic</span>
             <ArrowRight className="w-4 h-4" />
+          </Link>
+          <Link
+            href="/signup"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white dark:bg-[#174A48] border border-[#D4E8E3] dark:border-[#205653] text-[#123C3A] dark:text-[#F4FAF8] font-semibold text-xs transition-all"
+          >
+            <span>Create Account</span>
           </Link>
         </div>
       </div>

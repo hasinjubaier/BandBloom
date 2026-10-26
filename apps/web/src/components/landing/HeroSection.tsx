@@ -53,19 +53,19 @@ export function HeroSection() {
             {/* CTAs */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-1">
               <Link
-                href="/onboarding"
+                href="/login"
                 className="px-6 py-3.5 rounded-xl bg-[#25A995] hover:bg-[#123C3A] text-white font-semibold text-sm sm:text-base shadow-lg shadow-[#25A995]/20 border border-transparent transition-all flex items-center justify-center gap-2 group whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] focus-visible:ring-offset-2"
               >
-                <span>{t.hero.primaryCta}</span>
+                <span>{t.hero.signInCta}</span>
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" aria-hidden="true" />
               </Link>
 
               <Link
-                href="/practice"
+                href="/signup"
                 className="px-6 py-3.5 rounded-xl bg-white hover:bg-[#F4FAF8] border border-[#D4E8E3] text-[#123C3A] hover:border-[#25A995] dark:bg-[#123C3A] dark:hover:bg-[#0A1C1B] dark:border-[#205653] dark:text-[#F4FAF8] font-medium text-sm sm:text-base transition-all flex items-center justify-center gap-2 shadow-xs whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] focus-visible:ring-offset-2"
               >
                 <Laptop className="w-4 h-4 text-[#FF8A65]" aria-hidden="true" />
-                <span>{t.hero.secondaryCta}</span>
+                <span>{t.nav.signUp}</span>
               </Link>
             </div>
 

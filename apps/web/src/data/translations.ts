@@ -23,7 +23,7 @@ export const translations = {
       vocabulary: "Vocabulary",
       tutor: "AI Tutor",
       settings: "Settings",
-      startFree: "Start Free Diagnostic",
+      signUp: "Sign Up",
       signIn: "Sign In",
     },
     hero: {
@@ -32,11 +32,11 @@ export const translations = {
       titleHighlight: "with Personalized AI Feedback",
       titlePost: "",
       subtitle: "Prepare for IELTS Academic or General Training with realistic mock tests, source-backed AI tutoring, and a personalized study plan that helps you work toward your target band.",
-      primaryCta: "Start Free Diagnostic",
+      signInCta: "Sign In to Start",
       secondaryCta: "Try a Mock Test",
       targetHeading: "Choose Your Target Band",
       targetDesc: "Set your goal to personalize your study plan.",
-      trustFreePractice: "Free IELTS Practice",
+      trustFreePractice: "Structured Practice",
       trustAllSkills: "All 4 IELTS Skills",
       trustAiGuidance: "Source-Backed AI Guidance",
       trustUnofficialScores: "Unofficial Band Score Estimates",
@@ -86,7 +86,7 @@ export const translations = {
     cta: {
       title: "Ready to Achieve Your Target Band?",
       subtitle: "Join thousands of students building confidence for computer-delivered IELTS.",
-      button: "Begin Free 20-Minute Diagnostic",
+      button: "Sign In to Start",
     },
     footer: {
       about: "BandBloom provides structured, accessible, and computer-accurate self-study tools for IELTS learners worldwide.",
@@ -122,7 +122,7 @@ export const translations = {
       vocabulary: "শব্দভাণ্ডার",
       tutor: "AI গৃহশিক্ষক",
       settings: "সেটিংস",
-      startFree: "ফ্রি ডায়াগনস্টিক শুরু করুন",
+      signUp: "সাইন আপ",
       signIn: "লগইন",
     },
     hero: {
@@ -131,11 +131,11 @@ export const translations = {
       titleHighlight: "ব্যক্তিগতকৃত AI ফিডব্যাক সহ",
       titlePost: "আরও স্মার্টভাবে",
       subtitle: "বাস্তবধর্মী মক টেস্ট, উৎস-ভিত্তিক AI টিউটরিং এবং একটি ব্যক্তিগতকৃত স্টাডি প্ল্যানের মাধ্যমে IELTS Academic বা General Training-এর প্রস্তুতি নিন যা আপনাকে আপনার টার্গেট ব্যান্ডের দিকে এগিয়ে যেতে সাহায্য করবে।",
-      primaryCta: "ফ্রি ডায়াগনস্টিক শুরু করুন",
+      signInCta: "লগইন করুন",
       secondaryCta: "মক টেস্ট দিন",
       targetHeading: "আপনার টার্গেট ব্যান্ড বেছে নিন",
       targetDesc: "আপনার স্টাডি প্ল্যান ব্যক্তিগতকৃত করতে লক্ষ্য নির্ধারণ করুন।",
-      trustFreePractice: "ফ্রি IELTS অনুশীলন",
+      trustFreePractice: "নিয়মতান্ত্রিক অনুশীলন",
       trustAllSkills: "সব ৪টি IELTS স্কিল",
       trustAiGuidance: "উৎস-ভিত্তিক AI গাইডেন্স",
       trustUnofficialScores: "অনানুষ্ঠানিক ব্যান্ড স্কোর অনুমান",
@@ -185,7 +185,7 @@ export const translations = {
     cta: {
       title: "আপনার কাঙ্ক্ষিত ব্যান্ড স্কোরের জন্য প্রস্তুত তো?",
       subtitle: "হাজারো শিক্ষার্থীর সাথে আজই শুরু করুন কম্পিউটার-ডেলিভার্ড IELTS প্রস্তুতি।",
-      button: "ফ্রি ২০ মিনিটের ডায়াগনস্টিক শুরু করুন",
+      button: "শুরু করতে সাইন ইন করুন",
     },
     footer: {
       about: "BandBloom বিশ্বব্যাপী IELTS শিক্ষার্থীদের জন্য একটি উন্মুক্ত, নির্ভরযোগ্য ও কম্পিউটার-ভিত্তিক স্ব-প্রস্তুতি প্ল্যাটফর্ম।",

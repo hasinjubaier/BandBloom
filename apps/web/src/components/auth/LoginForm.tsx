@@ -2,11 +2,15 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Mail, Lock, Eye, EyeOff, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
+import { getSafeRedirectUrl } from "@/lib/redirect";
 
 export function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const nextParam = searchParams.get("next") || searchParams.get("returnTo") || searchParams.get("redirect");
+  const targetDestination = getSafeRedirectUrl(nextParam, "/dashboard");
 
   // Form inputs
   const [email, setEmail] = useState("");
@@ -67,7 +71,7 @@ export function LoginForm() {
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), password }),
+        body: JSON.stringify({ email: email.trim(), password, redirect: targetDestination }),
       });
 
       const data = await response.json();
@@ -82,7 +86,8 @@ export function LoginForm() {
         localStorage.setItem("bandbloom_remember_email", email.trim());
       }
       setTimeout(() => {
-        router.push(data.redirectTo || "/dashboard");
+        const dest = getSafeRedirectUrl(data.redirectTo || targetDestination, "/dashboard");
+        router.push(dest);
       }, 500);
     } catch {
       setErrorMessage("An unexpected network error occurred. Please check your connection and try again.");

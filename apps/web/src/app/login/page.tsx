@@ -1,3 +1,4 @@
+import React, { Suspense } from "react";
 import type { Metadata } from "next";
 import { LoginIllustration } from "@/components/auth/LoginIllustration";
 import { LoginForm } from "@/components/auth/LoginForm";
@@ -26,7 +27,9 @@ export default function LoginPage() {
 
         {/* Right Column: Login Form (~47% width on desktop) */}
         <div className="w-full lg:w-[47%] p-6 sm:p-10 lg:p-12 xl:p-16 flex flex-col justify-center bg-white dark:bg-[#123C3A]">
-          <LoginForm />
+          <Suspense fallback={<div className="p-8 text-center text-sm text-[#67839A]">Loading sign in...</div>}>
+            <LoginForm />
+          </Suspense>
         </div>
       </main>
     </div>

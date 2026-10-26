@@ -61,7 +61,13 @@ export function PortalShell({ children }: PortalShellProps) {
   // Fetch real profile on mount
   useEffect(() => {
     fetch("/api/profile")
-      .then((res) => (res.ok ? res.json() : null))
+      .then((res) => {
+        if (res.status === 401) {
+          router.push(`/login?next=${encodeURIComponent(pathname)}`);
+          return null;
+        }
+        return res.ok ? res.json() : null;
+      })
       .then((data) => {
         if (data && data.profile) {
           setStudent({
@@ -74,13 +80,37 @@ export function PortalShell({ children }: PortalShellProps) {
         }
       })
       .catch(() => {});
-  }, []);
+  }, [pathname, router]);
+
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [logoutError, setLogoutError] = useState<string | null>(null);
 
   const handleLogout = async () => {
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+    setLogoutError(null);
+
     try {
-      await fetch("/api/auth/logout", { method: "POST" });
-    } catch {}
-    router.push("/login");
+      const res = await fetch("/api/auth/logout", { method: "POST" });
+      const data = await res.json().catch(() => null);
+
+      if (!res.ok || (data && !data.success)) {
+        setLogoutError(data?.error || "Failed to sign out cleanly. Please try again.");
+        setIsLoggingOut(false);
+        return;
+      }
+
+      // Respect server redirect destination (defaulting to "/")
+      const targetDestination = data?.redirectTo || "/";
+      if (typeof window !== "undefined") {
+        window.location.href = targetDestination;
+      } else {
+        router.push(targetDestination);
+      }
+    } catch {
+      setLogoutError("Network error while signing out. Please try again.");
+      setIsLoggingOut(false);
+    }
   };
 
   // 14 Core Navigation Items
@@ -302,10 +332,11 @@ export function PortalShell({ children }: PortalShellProps) {
 
             <button
               onClick={handleLogout}
-              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
+              disabled={isLoggingOut}
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors disabled:opacity-50 cursor-pointer"
             >
               <LogOut className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>Log out</span>
+              <span>{isLoggingOut ? "Logging out..." : "Log out"}</span>
             </button>
           </div>
         </aside>
@@ -384,10 +415,11 @@ export function PortalShell({ children }: PortalShellProps) {
               <div className="p-4 border-t border-[#D4E8E3] dark:border-[#205653] space-y-2">
                 <button
                   onClick={handleLogout}
-                  className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-xs font-semibold text-rose-600 bg-rose-50 dark:bg-rose-950/40"
+                  disabled={isLoggingOut}
+                  className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-xs font-semibold text-rose-600 bg-rose-50 dark:bg-rose-950/40 disabled:opacity-50 cursor-pointer"
                 >
                   <LogOut className="w-4 h-4" />
-                  <span>Log out</span>
+                  <span>{isLoggingOut ? "Logging out..." : "Log out"}</span>
                 </button>
               </div>
             </div>
@@ -498,10 +530,11 @@ export function PortalShell({ children }: PortalShellProps) {
 
                     <button
                       onClick={handleLogout}
-                      className="w-full flex items-center gap-2 px-4 py-2 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-left"
+                      disabled={isLoggingOut}
+                      className="w-full flex items-center gap-2 px-4 py-2 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-left disabled:opacity-50 cursor-pointer"
                     >
                       <LogOut className="w-3.5 h-3.5" />
-                      <span>Log out</span>
+                      <span>{isLoggingOut ? "Logging out..." : "Log out"}</span>
                     </button>
                   </div>
                 )}
@@ -511,6 +544,20 @@ export function PortalShell({ children }: PortalShellProps) {
 
           {/* Page Content Body */}
           <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
+            {logoutError && (
+              <div
+                role="alert"
+                className="mb-4 p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 text-rose-800 dark:text-rose-300 text-xs sm:text-sm flex items-center justify-between"
+              >
+                <span>{logoutError}</span>
+                <button
+                  onClick={() => setLogoutError(null)}
+                  className="text-xs font-bold underline ml-2"
+                >
+                  Dismiss
+                </button>
+              </div>
+            )}
             {children}
           </main>
         </div>
