@@ -21,7 +21,7 @@ export default function PracticeHubPage() {
       title: "Academic & GT Reading Lab",
       skill: "Reading",
       desc: "Practice True/False/Not Given, Headings Matching, and Summary Completion with paragraph evidence highlights.",
-      href: "/skills/reading",
+      href: "/lessons",
       color: "border-[#25A995]/30 text-[#25A995] bg-[#E8F7F4] dark:bg-[#0A1C1B]",
       icon: BookOpen,
       badge: "Passage Evidence Highlighting",
@@ -30,7 +30,7 @@ export default function PracticeHubPage() {
       title: "Computer-Delivered Listening Lab",
       skill: "Listening",
       desc: "Practice with native British, Australian, and North American dialogues with speed controls and transcript unlocking.",
-      href: "/skills/listening",
+      href: "/lessons",
       color: "border-[#25A995]/30 text-[#25A995] bg-[#E8F7F4] dark:bg-[#0A1C1B]",
       icon: Headphones,
       badge: "Distractor Warning System",
@@ -39,7 +39,7 @@ export default function PracticeHubPage() {
       title: "Writing Tasks 1 & 2 Evaluator",
       skill: "Writing",
       desc: "Draft essays with real-time word counting, length warnings (min 150w / 250w), and 4-criterion AI rubric assessments.",
-      href: "/skills/writing",
+      href: "/lessons",
       color: "border-[#FF8A65]/30 text-[#FF8A65] bg-[#FFF6F3] dark:bg-[#0A1C1B]",
       icon: FileText,
       badge: "Instant Rubric Diagnostic",
@@ -48,7 +48,7 @@ export default function PracticeHubPage() {
       title: "Speaking Cue Card & Recorder",
       skill: "Speaking",
       desc: "Simulate Part 2 cue cards with 1-minute countdown prep and 2-minute recording with verbatim transcript editing.",
-      href: "/skills/speaking",
+      href: "/lessons",
       color: "border-[#25A995]/30 text-[#25A995] bg-[#E8F7F4] dark:bg-[#0A1C1B]",
       icon: Mic,
       badge: "Transcript & Fluency Breakdown",
@@ -99,7 +99,7 @@ export default function PracticeHubPage() {
                 href={lab.href}
                 className="w-full py-2.5 px-4 rounded-xl bg-[#25A995] hover:bg-[#123C3A] text-white font-semibold text-xs flex items-center justify-center gap-2 transition-all shadow-sm"
               >
-                <span>Enter {lab.skill} Lab</span>
+                <span>Explore {lab.skill} Lessons</span>
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </div>

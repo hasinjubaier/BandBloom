@@ -1,17 +1,21 @@
 import { NextResponse } from "next/server";
-import { listAvailableExams } from "@/server/services/exam.service";
+import { getAvailableExams } from "@/server/services/mock.service";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const exams = await listAvailableExams();
+    const { searchParams } = new URL(request.url);
+    const testType = searchParams.get("testType") || undefined;
+
+    const exams = await getAvailableExams(testType);
+
     return NextResponse.json({
       success: true,
       exams,
     });
-  } catch (error: any) {
-    console.error("List exams error:", error);
+  } catch (error: unknown) {
+    const err = error as { message?: string };
     return NextResponse.json(
-      { success: false, error: "Failed to retrieve available test forms." },
+      { success: false, error: err.message || "Failed to load exams." },
       { status: 500 }
     );
   }

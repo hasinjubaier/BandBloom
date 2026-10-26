@@ -19,10 +19,11 @@ export async function GET(request: Request) {
       success: true,
       profile,
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const error = err as { status?: number; message?: string };
     return NextResponse.json(
-      { success: false, error: err.message || "Unauthorized" },
-      { status: err.status || 401 }
+      { success: false, error: error.message || "Unauthorized" },
+      { status: error.status || 401 }
     );
   }
 }
@@ -70,10 +71,11 @@ export async function PATCH(request: Request) {
       message: "Profile updated successfully.",
       profile: updated,
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const error = err as { status?: number; message?: string };
     return NextResponse.json(
-      { success: false, error: err.message || "Failed to update profile." },
-      { status: err.status || 500 }
+      { success: false, error: error.message || "Failed to update profile." },
+      { status: error.status || 500 }
     );
   }
 }

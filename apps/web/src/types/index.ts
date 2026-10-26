@@ -24,4 +24,4 @@ export interface SkillCardConfig {
   keyTopics: { en: string; bn: string }[];
 }
 
-export type TargetBand = 6.5 | 7.0 | 7.5 | 8.0 | 8.5;
+export type TargetBand = 6.0 | 6.5 | 7.0 | 7.5 | 8.0 | 8.5 | 9.0;

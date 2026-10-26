@@ -238,18 +238,18 @@ export function WeeklyMockTestsSection() {
           {/* Action Row */}
           <div className="pt-6 mt-6 border-t border-[#D4E8E3]/70 dark:border-[#205653]/70 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
             <Link
-              href="/mock-centre/exam"
+              href="/onboarding"
               className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#25A995] hover:bg-[#123C3A] text-white font-semibold text-xs sm:text-sm shadow-md shadow-[#25A995]/20 border border-transparent transition-all group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995]"
             >
-              <span>{isBn ? "মক টেস্ট শুরু করুন" : "Start Mock Test"}</span>
+              <span>{isBn ? "প্রস্তুতি শুরু করুন" : "Start Preparation"}</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" aria-hidden="true" />
             </Link>
 
             <Link
-              href="/mock-centre"
+              href="/practice"
               className="inline-flex items-center justify-center gap-1.5 text-xs font-bold text-[#3D6462] dark:text-[#A0C5C1] hover:text-[#123C3A] dark:hover:text-white transition-colors"
             >
-              <span>{isBn ? "সব মক টেস্ট ফর্ম দেখুন" : "View All Test Forms"}</span>
+              <span>{isBn ? "অনুশীলন হাব দেখুন" : "Explore Practice Hub"}</span>
               <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
             </Link>
           </div>
@@ -360,10 +360,10 @@ export function WeeklyMockTestsSection() {
             </div>
 
             <Link
-              href="/results/mock-1"
+              href="/how-it-works"
               className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#25A995] hover:underline pt-1"
             >
-              <span>{isBn ? "নমুনা রেজাল্ট রিপোর্ট দেখুন" : "View Sample Result Breakdown"}</span>
+              <span>{isBn ? "মূল্যায়ন পদ্ধতি জানুন" : "Learn How Scoring Works"}</span>
               <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
             </Link>
           </div>
@@ -445,10 +445,10 @@ export function WeeklyMockTestsSection() {
               {b.step === "04" ? (
                 <div className="pt-3 mt-4 border-t border-[#D4E8E3]/60 dark:border-[#205653]/60">
                   <Link
-                    href="/notebook"
+                    href="/practice"
                     className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#25A995] hover:underline"
                   >
-                    <span>{isBn ? "ভুলের নোটবুক দেখুন" : "View Mistake Notebook"}</span>
+                    <span>{isBn ? "টার্গেটেড প্র্যাকটিস দেখুন" : "Explore Targeted Practice"}</span>
                     <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
                   </Link>
                 </div>
@@ -473,10 +473,10 @@ export function WeeklyMockTestsSection() {
 
           <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3.5">
             <Link
-              href="/mock-centre"
+              href="/onboarding"
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#25A995] hover:bg-[#123C3A] text-white font-semibold text-xs sm:text-sm shadow-md shadow-[#25A995]/20 border border-transparent transition-all group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] focus-visible:ring-offset-2"
             >
-              <span>{isBn ? "মক টেস্ট শুরু করুন" : "Start a Mock Test"}</span>
+              <span>{isBn ? "প্রস্তুতি শুরু করুন" : "Start Preparation"}</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" aria-hidden="true" />
             </Link>
 

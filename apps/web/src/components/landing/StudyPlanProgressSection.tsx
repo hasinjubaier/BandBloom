@@ -104,8 +104,8 @@ export function StudyPlanProgressSection() {
       icon: CalendarCheck,
       badge: isBn ? "৩০ / ৬০ / ৯০ মিনিট" : "30 / 60 / 90 Mins",
       link: {
-        href: "/study-plan",
-        label: isBn ? "স্টাডি প্ল্যান কাস্টমাইজ করুন" : "Customise Your Plan",
+        href: "/onboarding",
+        label: isBn ? "প্রস্তুতির পরিকল্পনা শুরু করুন" : "Set Preparation Goal",
       },
       accent: "text-[#25A995] bg-[#E8F7F4] dark:bg-[#0A1C1B] border-[#25A995]/30",
     },
@@ -118,8 +118,8 @@ export function StudyPlanProgressSection() {
       icon: ChartNoAxesCombined,
       badge: isBn ? "৪-স্কিল ড্যাশবোর্ড" : "4-Skill Overview",
       link: {
-        href: "/dashboard",
-        label: isBn ? "কমান্ড সেন্টার খুলুন" : "Open Learning Dashboard",
+        href: "/how-it-works",
+        label: isBn ? "অগ্রগতি মডেল দেখুন" : "View Progress Model",
       },
       accent: "text-blue-600 dark:text-blue-400 bg-blue-50/90 dark:bg-blue-950/50 border-blue-200/80",
     },
@@ -132,8 +132,8 @@ export function StudyPlanProgressSection() {
       icon: NotebookPen,
       badge: isBn ? "ভুলের ক্যাটাগরি" : "Error Categorisation",
       link: {
-        href: "/notebook",
-        label: isBn ? "ভুলের নোটবুক দেখুন" : "Explore Mistake Notebook",
+        href: "/practice",
+        label: isBn ? "টার্গেটেড প্র্যাকটিস দেখুন" : "Explore Targeted Practice",
       },
       accent: "text-[#FF7043] dark:text-[#FFA285] bg-orange-50/90 dark:bg-orange-950/50 border-orange-200/80",
     },
@@ -146,8 +146,8 @@ export function StudyPlanProgressSection() {
       icon: BookA,
       badge: isBn ? "অ্যাকাডেমিক লেক্সিকন" : "Academic Word Bank",
       link: {
-        href: "/vocabulary",
-        label: isBn ? "শব্দভাণ্ডার ব্যাংক দেখুন" : "Review Vocabulary Bank",
+        href: "/lessons",
+        label: isBn ? "লেসন ও শব্দভাণ্ডার দেখুন" : "Explore Lessons & Vocab",
       },
       accent: "text-violet-600 dark:text-violet-400 bg-violet-50/90 dark:bg-violet-950/50 border-violet-200/80",
     },
@@ -349,10 +349,10 @@ export function StudyPlanProgressSection() {
                 </span>
               </div>
               <Link
-                href="/dashboard"
+                href="/onboarding"
                 className="text-[11px] font-bold text-[#25A995] hover:underline whitespace-nowrap shrink-0"
               >
-                {isBn ? "ড্যাশবোর্ড দেখুন" : "View Dashboard"}
+                {isBn ? "লক্ষ্য নির্ধারণ করুন" : "Set Target Goal"}
               </Link>
             </div>
           </div>
@@ -360,18 +360,18 @@ export function StudyPlanProgressSection() {
           {/* Action Row */}
           <div className="pt-6 mt-6 border-t border-[#D4E8E3]/70 dark:border-[#205653]/70 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
             <Link
-              href="/study-plan"
+              href="/onboarding"
               className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#25A995] hover:bg-[#123C3A] text-white font-semibold text-xs sm:text-sm shadow-md shadow-[#25A995]/20 border border-transparent transition-all group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995]"
             >
-              <span>{isBn ? "আপনার স্টাডি প্ল্যান শুরু করুন" : "Start Your Study Plan"}</span>
+              <span>{isBn ? "আপনার প্রস্তুতি শুরু করুন" : "Start Your Preparation"}</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" aria-hidden="true" />
             </Link>
 
             <Link
-              href="/dashboard"
+              href="/practice"
               className="inline-flex items-center justify-center gap-1.5 text-xs font-bold text-[#3D6462] dark:text-[#A0C5C1] hover:text-[#123C3A] dark:hover:text-white transition-colors"
             >
-              <span>{isBn ? "লার্নিং ড্যাশবোর্ড দেখুন" : "Open Full Dashboard"}</span>
+              <span>{isBn ? "অনুশীলন হাব খুলুন" : "Open Practice Hub"}</span>
               <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
             </Link>
           </div>
@@ -437,10 +437,10 @@ export function StudyPlanProgressSection() {
 
           <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3.5">
             <Link
-              href="/study-plan"
+              href="/onboarding"
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#25A995] hover:bg-[#123C3A] text-white font-semibold text-xs sm:text-sm shadow-md shadow-[#25A995]/20 border border-transparent transition-all group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] focus-visible:ring-offset-2"
             >
-              <span>{isBn ? "আপনার স্টাডি প্ল্যান শুরু করুন" : "Start Your Study Plan"}</span>
+              <span>{isBn ? "আপনার প্রস্তুতি শুরু করুন" : "Start Your Preparation"}</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" aria-hidden="true" />
             </Link>
 

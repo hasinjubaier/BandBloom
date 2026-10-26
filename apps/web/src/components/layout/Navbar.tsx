@@ -1,16 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
-  BrainCircuit,
-  GraduationCap,
   Calculator,
   Menu,
   X,
-  Compass,
-  Clock,
   Sun,
   Moon,
   ArrowRight,
@@ -21,10 +17,22 @@ import { ScoreCalculatorModal } from "@/components/ui/ScoreCalculatorModal";
 import { useLandingNavigation } from "@/hooks/useLandingNavigation";
 
 export const Navbar: React.FC = () => {
-  const { language, setLanguage, t } = useLanguage();
+  const { language, setLanguage } = useLanguage();
   const { theme, toggleTheme } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [calcOpen, setCalcOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && data.authenticated) {
+          setIsAuthenticated(true);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const {
     isHomePage,
@@ -67,14 +75,6 @@ export const Navbar: React.FC = () => {
       href: "/#ai-tutor",
       label: isBn ? "AI গৃহশিক্ষক" : "AI Tutor",
     },
-  ];
-
-  // Secondary student tools for mobile drawer
-  const studentLinks = [
-    { href: "/dashboard", label: t.nav.dashboard, icon: Compass },
-    { href: "/study-plan", label: t.nav.studyPlan, icon: Clock },
-    { href: "/mock-centre", label: t.nav.mockCentre, icon: GraduationCap },
-    { href: "/tutor", label: t.nav.tutor, icon: BrainCircuit },
   ];
 
   const isActive = (id: string) => {
@@ -210,22 +210,32 @@ export const Navbar: React.FC = () => {
                 )}
               </button>
 
-              {/* Sign In link */}
-              <Link
-                href="/login"
-                className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-[#123C3A] dark:text-[#F4FAF8] hover:text-[#25A995] dark:hover:text-[#25A995] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995]"
-              >
-                {isBn ? "লগইন" : "Sign in"}
-              </Link>
+              {isAuthenticated ? (
+                <Link
+                  href="/dashboard"
+                  className="px-4 py-2 rounded-xl bg-[#25A995] hover:bg-[#123C3A] text-white text-xs sm:text-sm font-semibold shadow-md shadow-[#25A995]/25 border border-transparent transition-all duration-200 flex items-center gap-1.5"
+                >
+                  <span>{isBn ? "ড্যাশবোর্ড" : "Student Portal"}</span>
+                  <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+                </Link>
+              ) : (
+                <>
+                  <Link
+                    href="/login"
+                    className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-[#123C3A] dark:text-[#F4FAF8] hover:text-[#25A995] dark:hover:text-[#25A995] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995]"
+                  >
+                    {isBn ? "লগইন" : "Sign in"}
+                  </Link>
 
-              {/* Start Free Primary CTA */}
-              <Link
-                href="/onboarding"
-                className="px-4 py-2 rounded-xl bg-[#25A995] hover:bg-[#123C3A] text-white text-xs sm:text-sm font-semibold shadow-md shadow-[#25A995]/25 border border-transparent transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] focus-visible:ring-offset-2 motion-safe:hover:-translate-y-0.5 active:translate-y-0 flex items-center gap-1.5"
-              >
-                <span>{isBn ? "ফ্রি শুরু করুন" : "Start Free"}</span>
-                <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
-              </Link>
+                  <Link
+                    href="/onboarding"
+                    className="px-4 py-2 rounded-xl bg-[#25A995] hover:bg-[#123C3A] text-white text-xs sm:text-sm font-semibold shadow-md shadow-[#25A995]/25 border border-transparent transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] focus-visible:ring-offset-2 motion-safe:hover:-translate-y-0.5 active:translate-y-0 flex items-center gap-1.5"
+                  >
+                    <span>{isBn ? "ফ্রি শুরু করুন" : "Start Free"}</span>
+                    <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+                  </Link>
+                </>
+              )}
             </div>
 
             {/* Mobile / Tablet Controls (< lg) */}
@@ -324,39 +334,34 @@ export const Navbar: React.FC = () => {
 
             {/* Mobile Action Buttons */}
             <div className="pt-2 border-t border-[#D4E8E3] dark:border-[#205653] space-y-2">
-              <Link
-                href="/onboarding"
-                onClick={() => setMobileMenuOpen(false)}
-                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[#25A995] hover:bg-[#123C3A] text-white text-sm font-semibold shadow-md shadow-[#25A995]/25 transition-all"
-              >
-                <span>{isBn ? "ফ্রি প্রস্তুতি শুরু করুন" : "Start Free Preparation"}</span>
-                <ArrowRight className="w-4 h-4" aria-hidden="true" />
-              </Link>
-              <Link
-                href="/login"
-                onClick={() => setMobileMenuOpen(false)}
-                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-white dark:bg-[#174A48] border border-[#D4E8E3] dark:border-[#205653] text-[#123C3A] dark:text-[#F4FAF8] text-sm font-semibold hover:border-[#25A995] transition-all"
-              >
-                <span>{isBn ? "লগইন করুন" : "Sign in to account"}</span>
-              </Link>
-            </div>
-
-            {/* Student Portal Shortcuts */}
-            <div className="border-t border-[#D4E8E3] dark:border-[#205653] pt-3 space-y-1">
-              <p className="text-[10px] uppercase font-bold tracking-wider text-[#FF8A65] px-2 mb-1">
-                {isBn ? "স্টুডেন্ট পোর্টাল" : "Student Portal"}
-              </p>
-              {studentLinks.map((item) => (
+              {isAuthenticated ? (
                 <Link
-                  key={item.href}
-                  href={item.href}
+                  href="/dashboard"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-[#3D6462] dark:text-[#A0C5C1] hover:bg-[#F4FAF8] dark:hover:bg-[#174A48] hover:text-[#25A995]"
+                  className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[#25A995] hover:bg-[#123C3A] text-white text-sm font-semibold shadow-md shadow-[#25A995]/25 transition-all"
                 >
-                  <item.icon className="w-3.5 h-3.5 text-[#25A995]" aria-hidden="true" />
-                  <span>{item.label}</span>
+                  <span>{isBn ? "ড্যাশবোর্ড প্রবেশ করুন" : "Enter Student Portal"}</span>
+                  <ArrowRight className="w-4 h-4" aria-hidden="true" />
                 </Link>
-              ))}
+              ) : (
+                <>
+                  <Link
+                    href="/onboarding"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[#25A995] hover:bg-[#123C3A] text-white text-sm font-semibold shadow-md shadow-[#25A995]/25 transition-all"
+                  >
+                    <span>{isBn ? "ফ্রি প্রস্তুতি শুরু করুন" : "Start Free Preparation"}</span>
+                    <ArrowRight className="w-4 h-4" aria-hidden="true" />
+                  </Link>
+                  <Link
+                    href="/login"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-white dark:bg-[#174A48] border border-[#D4E8E3] dark:border-[#205653] text-[#123C3A] dark:text-[#F4FAF8] text-sm font-semibold hover:border-[#25A995] transition-all"
+                  >
+                    <span>{isBn ? "লগইন করুন" : "Sign in to account"}</span>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         )}

@@ -9,7 +9,6 @@ import {
   Mic,
   Clock,
   ArrowRight,
-  Filter,
 } from "lucide-react";
 import { MOCK_LESSONS } from "@/data/mockCurriculum";
 import { useLanguage } from "@/context/LanguageContext";
@@ -38,20 +37,6 @@ export default function LessonsPage() {
     }
   };
 
-  const getLabLink = (skill: string) => {
-    switch (skill) {
-      case "reading":
-        return "/skills/reading";
-      case "listening":
-        return "/skills/listening";
-      case "writing":
-        return "/skills/writing";
-      case "speaking":
-        return "/skills/speaking";
-      default:
-        return "/practice";
-    }
-  };
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full space-y-10">
@@ -130,7 +115,7 @@ export default function LessonsPage() {
               </span>
 
               <Link
-                href={getLabLink(l.skill)}
+                href="/practice"
                 className="font-semibold text-[#25A995] hover:opacity-80 flex items-center gap-1"
               >
                 <span>Start Practice</span>

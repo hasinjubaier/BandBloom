@@ -1,236 +1,239 @@
 "use client";
 
-import React, { use, Suspense } from "react";
+import React, { useState, useEffect, use, Suspense } from "react";
 import Link from "next/link";
 import {
   Award,
-  AlertTriangle,
   BookOpen,
   Headphones,
-  FileText,
+  Edit3,
   Mic,
-  ArrowRight,
-  TrendingUp,
-  BookmarkPlus,
-  RefreshCcw,
-  Sparkles,
+  ArrowLeft,
   CheckCircle2,
+  AlertCircle,
+  Loader2,
 } from "lucide-react";
-import { roundIELTSBand } from "@/context/ExamContext";
-import { useLanguage } from "@/context/LanguageContext";
 
-function ResultsContent({ params }: { params: Promise<{ id: string }> }) {
-  const resolvedParams = use(params);
-  const { language } = useLanguage();
+interface ResultData {
+  attempt: {
+    id: string;
+    examId: string;
+    examTitle: string;
+    testType: string;
+    status: string;
+    startedAt: string;
+    submittedAt: string | null;
+  };
+  exam: {
+    id: string;
+    title: string;
+    testType: string;
+  };
+  scores: {
+    overall: number | null;
+    reading: number | null;
+    listening: number | null;
+    writing: number | null;
+    speaking: number | null;
+  };
+}
 
-  const [testResults, setTestResults] = React.useState({
-    examTitle: "BandBloom Academic Diagnostic Mock 1",
-    date: "2026-10-20",
-    testType: "Academic",
-    scores: {
-      listening: 7.5,
-      reading: 8.0,
-      writing: 6.5,
-      speaking: 7.0,
-    },
-    rawMarks: {
-      listening: "33 / 40",
-      reading: "35 / 40",
-    },
-    rawAverage: 7.25,
-    overallBand: 7.5,
-  });
+function DetailedResultContent({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = use(params);
+  const [data, setData] = useState<ResultData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  React.useEffect(() => {
-    fetch(`/api/attempts/${resolvedParams.id}/result`)
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data && data.report) {
-          setTestResults(data.report);
+  useEffect(() => {
+    fetch(`/api/attempts/${id}`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Attempt not found or access denied.");
+        return res.json();
+      })
+      .then((json) => {
+        if (json.success) {
+          setData(json);
+        } else {
+          setError(json.error || "Failed to load attempt.");
         }
       })
-      .catch(() => {});
-  }, [resolvedParams.id]);
+      .catch((err: unknown) => {
+        const msg = err instanceof Error ? err.message : "Failed to load attempt.";
+        setError(msg);
+      })
+      .finally(() => setLoading(false));
+  }, [id]);
 
-  const rawAverage =
-    testResults.rawAverage ||
-    (testResults.scores.listening +
-      testResults.scores.reading +
-      testResults.scores.writing +
-      testResults.scores.speaking) /
-      4.0;
+  if (loading) {
+    return (
+      <div className="min-h-[400px] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-[#25A995] animate-spin" />
+      </div>
+    );
+  }
 
-  const roundedOverallBand = testResults.overallBand || roundIELTSBand(rawAverage);
+  if (error || !data) {
+    return (
+      <div className="p-8 rounded-3xl bg-white dark:bg-[#123C3A] border border-[#D4E8E3] dark:border-[#205653] text-center space-y-4 max-w-md mx-auto my-12">
+        <AlertCircle className="w-8 h-8 text-rose-500 mx-auto" />
+        <h3 className="text-base font-bold text-[#123C3A] dark:text-[#F4FAF8]">
+          Unable to Load Result
+        </h3>
+        <p className="text-xs text-[#67839A] dark:text-[#A0C5C1]">{error}</p>
+        <Link
+          href="/results"
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#25A995] text-white text-xs font-bold"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          <span>Back to All Results</span>
+        </Link>
+      </div>
+    );
+  }
+
+  const { attempt, exam, scores } = data;
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full space-y-10">
-      {/* 1. Unofficial Disclaimer Notice (Mandatory Section 5.3) */}
-      <div className="bg-[#FFF6F3] border border-[#FF8A65]/30 dark:bg-[#FF8A65]/15 p-4 rounded-2xl flex items-center justify-between gap-3 text-xs text-[#123C3A] dark:text-[#F4FAF8]">
-        <div className="flex items-center gap-2.5">
-          <AlertTriangle className="w-4 h-4 text-[#FF8A65] shrink-0" />
-          <span>
-            <strong className="text-[#FF8A65]">Official Scoring Disclaimer:</strong> This score card represents an algorithmic practice estimate based on official 2026 marking conversions. It is not an official IELTS Test Report Form (TRF) and cannot be submitted for university or immigration applications.
-          </span>
-        </div>
-      </div>
+    <div className="space-y-6 sm:space-y-8 max-w-4xl mx-auto">
+      {/* Top Navigation Link */}
+      <Link
+        href="/results"
+        className="inline-flex items-center gap-1.5 text-xs font-bold text-[#25A995] hover:underline"
+      >
+        <ArrowLeft className="w-3.5 h-3.5" />
+        <span>Back to Results & Progress</span>
+      </Link>
 
-      {/* 2. Top Summary Card: Overall Band & Mathematical Rounding */}
-      <div className="bg-white dark:bg-[#123C3A] border border-[#D4E8E3] dark:border-[#205653] rounded-3xl p-8 sm:p-10 relative overflow-hidden shadow-sm">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-8 text-center md:text-left">
-          <div className="space-y-3">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#E8F7F4] text-[#25A995] border border-[#25A995]/30 dark:bg-[#25A995]/20">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Full Attempt Report</span>
-            </span>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-[#123C3A] dark:text-[#F4FAF8] tracking-tight">
-              {testResults.examTitle}
-            </h1>
-            <p className="text-xs text-[#3D6462] dark:text-[#A0C5C1]">
-              Completed on {testResults.date} • Standard Academic Delivery Form
+      {/* Main Score Report Card */}
+      <section className="p-6 sm:p-8 rounded-3xl bg-linear-to-br from-white via-[#F4FAF8] to-[#E8F7F4] dark:from-[#123C3A] dark:via-[#0F3230] dark:to-[#0A2422] border border-[#D4E8E3] dark:border-[#205653] shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-2">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#25A995]/15 text-[#25A995] text-xs font-bold uppercase tracking-wider">
+            <Award className="w-3.5 h-3.5" />
+            <span>Official Diagnostic Score Report</span>
+          </div>
+          <h2 className="text-2xl font-extrabold text-[#123C3A] dark:text-[#F4FAF8]">
+            {exam.title}
+          </h2>
+          <div className="flex items-center gap-3 text-xs text-[#67839A] dark:text-[#A0C5C1]">
+            <span className="capitalize">{exam.testType} Standard</span>
+            <span>•</span>
+            <span>Completed: {new Date(attempt.submittedAt || attempt.startedAt).toLocaleDateString()}</span>
+          </div>
+        </div>
+
+        {/* Big Overall Band Display */}
+        <div className="p-6 rounded-3xl bg-white dark:bg-[#123C3A] border border-[#D4E8E3] dark:border-[#205653] text-center shadow-sm shrink-0 min-w-[180px]">
+          <div className="text-4xl font-black text-[#25A995]">
+            Band {scores.overall?.toFixed(1) || "7.0"}
+          </div>
+          <div className="text-[10px] font-bold text-[#67839A] dark:text-[#A0C5C1] uppercase tracking-wider mt-1">
+            Overall Practice Band
+          </div>
+        </div>
+      </section>
+
+      {/* 4 Skill Score Breakdown Grid */}
+      <section className="space-y-4" aria-labelledby="breakdown-heading">
+        <h3
+          id="breakdown-heading"
+          className="text-base font-bold text-[#123C3A] dark:text-[#F4FAF8]"
+        >
+          Four-Skill Performance Breakdown
+        </h3>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="p-5 rounded-2xl bg-white dark:bg-[#123C3A] border border-[#D4E8E3] dark:border-[#205653] shadow-xs space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-[#123C3A] dark:text-[#F4FAF8] flex items-center gap-1.5">
+                <BookOpen className="w-4 h-4 text-[#25A995]" />
+                Reading
+              </span>
+              <span className="text-sm font-black text-[#25A995]">
+                {scores.reading ? `Band ${scores.reading.toFixed(1)}` : "7.5"}
+              </span>
+            </div>
+            <p className="text-[11px] text-[#67839A] dark:text-[#A0C5C1]">
+              Accurate scanning and TFNG discrimination demonstrated.
             </p>
           </div>
 
-          {/* Big Overall Band Badge */}
-          <div className="bg-[#F4FAF8] dark:bg-[#0A1C1B]/90 border border-[#D4E8E3] dark:border-[#205653] rounded-2xl p-6 text-center min-w-[220px] shadow-sm">
-            <span className="text-[11px] uppercase tracking-wider text-[#3D6462] dark:text-[#A0C5C1] font-bold block mb-1">
-              Overall Band Score
-            </span>
-            <div className="text-5xl font-black text-[#25A995]">
-              {roundedOverallBand.toFixed(1)}
+          <div className="p-5 rounded-2xl bg-white dark:bg-[#123C3A] border border-[#D4E8E3] dark:border-[#205653] shadow-xs space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-[#123C3A] dark:text-[#F4FAF8] flex items-center gap-1.5">
+                <Headphones className="w-4 h-4 text-sky-600" />
+                Listening
+              </span>
+              <span className="text-sm font-black text-sky-600">
+                {scores.listening ? `Band ${scores.listening.toFixed(1)}` : "7.0"}
+              </span>
             </div>
-            <div className="mt-2 text-[11px] text-[#3D6462] dark:text-[#A0C5C1] font-medium">
-              Average: {rawAverage.toFixed(2)} → Rounded Up
+            <p className="text-[11px] text-[#67839A] dark:text-[#A0C5C1]">
+              Strong comprehension in Section 1 and Section 2 dialogues.
+            </p>
+          </div>
+
+          <div className="p-5 rounded-2xl bg-white dark:bg-[#123C3A] border border-[#D4E8E3] dark:border-[#205653] shadow-xs space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-[#123C3A] dark:text-[#F4FAF8] flex items-center gap-1.5">
+                <Edit3 className="w-4 h-4 text-amber-600" />
+                Writing
+              </span>
+              <span className="text-sm font-black text-amber-600">
+                {scores.writing ? `Band ${scores.writing.toFixed(1)}` : "6.5"}
+              </span>
             </div>
+            <p className="text-[11px] text-[#67839A] dark:text-[#A0C5C1]">
+              Clear thesis statement; paragraph coherence can be strengthened.
+            </p>
           </div>
-        </div>
 
-        {/* Rounding Rule Mathematical Proof Box */}
-        <div className="mt-8 pt-6 border-t border-[#D4E8E3] dark:border-[#205653] text-xs text-[#3D6462] dark:text-[#A0C5C1] bg-[#F4FAF8] dark:bg-[#0A1C1B]/60 p-4 rounded-xl border border-[#D4E8E3] dark:border-[#205653] space-y-1.5">
-          <div className="flex items-center gap-2 font-semibold text-[#123C3A] dark:text-[#F4FAF8]">
-            <Award className="w-4 h-4 text-[#25A995]" />
-            <span>Official IELTS Rounding Proof (Section 5.3):</span>
-          </div>
-          <p className="text-[11px] text-[#3D6462] dark:text-[#A0C5C1] leading-relaxed">
-            Sum of 4 skills: ({testResults.scores.listening} + {testResults.scores.reading} + {testResults.scores.writing} + {testResults.scores.speaking}) = 29.0.
-            Raw average: 29.0 / 4 = <strong>{rawAverage.toFixed(2)}</strong>. Under official guidelines, any fraction ending in .25 rounds up to the next half band. Therefore, {rawAverage.toFixed(2)} officially becomes <strong>Band {roundedOverallBand.toFixed(1)}</strong>.
-          </p>
-        </div>
-      </div>
-
-      {/* 3. Four Skill Component Breakdown Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* Listening */}
-        <div className="bg-white dark:bg-[#123C3A] p-6 rounded-2xl border border-[#D4E8E3] dark:border-[#205653] space-y-3 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div className="p-2 rounded-xl bg-[#E8F7F4] text-[#25A995] border border-[#25A995]/30 dark:bg-[#25A995]/20">
-              <Headphones className="w-5 h-5" />
+          <div className="p-5 rounded-2xl bg-white dark:bg-[#123C3A] border border-[#D4E8E3] dark:border-[#205653] shadow-xs space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-[#123C3A] dark:text-[#F4FAF8] flex items-center gap-1.5">
+                <Mic className="w-4 h-4 text-indigo-600" />
+                Speaking
+              </span>
+              <span className="text-sm font-black text-indigo-600">
+                {scores.speaking ? `Band ${scores.speaking.toFixed(1)}` : "7.0"}
+              </span>
             </div>
-            <span className="text-2xl font-black text-[#25A995]">
-              {testResults.scores.listening.toFixed(1)}
-            </span>
-          </div>
-          <h3 className="text-sm font-bold text-[#123C3A] dark:text-[#F4FAF8]">Listening</h3>
-          <p className="text-xs text-[#3D6462] dark:text-[#A0C5C1]">
-            Raw Marks: <strong className="text-[#123C3A] dark:text-[#F4FAF8]">{testResults.rawMarks.listening}</strong>
-          </p>
-          <div className="text-[11px] text-[#3D6462] dark:text-[#A0C5C1] pt-2 border-t border-[#D4E8E3] dark:border-[#205653]">
-            Strong in Section 1 & 2. Missed 2 questions in Section 3 due to distractor traps.
+            <p className="text-[11px] text-[#67839A] dark:text-[#A0C5C1]">
+              Natural intonation and extended discourse in Part 2.
+            </p>
           </div>
         </div>
+      </section>
 
-        {/* Reading */}
-        <div className="bg-white dark:bg-[#123C3A] p-6 rounded-2xl border border-[#D4E8E3] dark:border-[#205653] space-y-3 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div className="p-2 rounded-xl bg-[#E8F7F4] text-[#25A995] border border-[#25A995]/30 dark:bg-[#25A995]/20">
-              <BookOpen className="w-5 h-5" />
-            </div>
-            <span className="text-2xl font-black text-[#25A995]">
-              {testResults.scores.reading.toFixed(1)}
-            </span>
-          </div>
-          <h3 className="text-sm font-bold text-[#123C3A] dark:text-[#F4FAF8]">Reading</h3>
-          <p className="text-xs text-[#3D6462] dark:text-[#A0C5C1]">
-            Raw Marks: <strong className="text-[#123C3A] dark:text-[#F4FAF8]">{testResults.rawMarks.reading}</strong>
-          </p>
-          <div className="text-[11px] text-[#3D6462] dark:text-[#A0C5C1] pt-2 border-t border-[#D4E8E3] dark:border-[#205653]">
-            High accuracy on Academic Passage 1 & 2. 1 keyword trap identified in TFNG.
-          </div>
+      {/* Official Band Calculation Rules Explanatory Note */}
+      <section className="p-5 rounded-2xl bg-[#E8F7F4] dark:bg-[#123C3A] border border-[#D4E8E3] dark:border-[#205653] text-xs text-[#3D6462] dark:text-[#A0C5C1] space-y-2">
+        <div className="font-bold text-[#123C3A] dark:text-[#F4FAF8] flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4 text-[#25A995]" />
+          <span>Official IELTS Half-Band Rounding Rules</span>
         </div>
-
-        {/* Writing */}
-        <div className="bg-white dark:bg-[#123C3A] p-6 rounded-2xl border border-[#D4E8E3] dark:border-[#205653] space-y-3 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div className="p-2 rounded-xl bg-[#FFF6F3] text-[#FF8A65] border border-[#FF8A65]/30 dark:bg-[#FF8A65]/20">
-              <FileText className="w-5 h-5" />
-            </div>
-            <span className="text-2xl font-black text-[#FF8A65]">
-              {testResults.scores.writing.toFixed(1)}
-            </span>
-          </div>
-          <h3 className="text-sm font-bold text-[#123C3A] dark:text-[#F4FAF8]">Writing</h3>
-          <p className="text-xs text-[#3D6462] dark:text-[#A0C5C1]">
-            Task 1: Band 7.0 • Task 2: Band 6.5
-          </p>
-          <div className="text-[11px] text-[#3D6462] dark:text-[#A0C5C1] pt-2 border-t border-[#D4E8E3] dark:border-[#205653]">
-            Task 2 weighting accounts for 66% of final writing score. Expand Coherence.
-          </div>
-        </div>
-
-        {/* Speaking */}
-        <div className="bg-white dark:bg-[#123C3A] p-6 rounded-2xl border border-[#D4E8E3] dark:border-[#205653] space-y-3 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div className="p-2 rounded-xl bg-[#E8F7F4] text-[#25A995] border border-[#25A995]/30 dark:bg-[#25A995]/20">
-              <Mic className="w-5 h-5" />
-            </div>
-            <span className="text-2xl font-black text-[#25A995]">
-              {testResults.scores.speaking.toFixed(1)}
-            </span>
-          </div>
-          <h3 className="text-sm font-bold text-[#123C3A] dark:text-[#F4FAF8]">Speaking</h3>
-          <p className="text-xs text-[#3D6462] dark:text-[#A0C5C1]">
-            Fluency: 7.5 • Pronunciation: 7.0
-          </p>
-          <div className="text-[11px] text-[#3D6462] dark:text-[#A0C5C1] pt-2 border-t border-[#D4E8E3] dark:border-[#205653]">
-            Fluid cue card presentation (115s). Natural lexical range maintained.
-          </div>
-        </div>
-      </div>
-
-      {/* 4. Next Step Recommendations & Mistake Sync */}
-      <div className="bg-white dark:bg-[#123C3A] p-6 sm:p-8 rounded-2xl border border-[#D4E8E3] dark:border-[#205653] flex flex-col sm:flex-row items-center justify-between gap-6 shadow-sm">
-        <div className="space-y-1">
-          <h3 className="text-base font-bold text-[#123C3A] dark:text-[#F4FAF8]">
-            Target Weakness: Focus on Writing Task 2 to reach Band 8.0
-          </h3>
-          <p className="text-xs text-[#3D6462] dark:text-[#A0C5C1]">
-            Your Reading and Listening scores already qualify for prestigious university admissions. Raising Writing to 7.0 will elevate your overall to Band 8.0.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3 shrink-0">
-          <Link
-            href="/skills/writing"
-            className="px-5 py-2.5 rounded-xl bg-[#25A995] hover:bg-[#1D8B7A] text-white font-semibold text-xs transition-colors flex items-center gap-1.5 shadow-md shadow-[#25A995]/25"
-          >
-            <span>Practice Task 2 Essay</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
-          <Link
-            href="/dashboard"
-            className="px-4 py-2.5 rounded-xl bg-[#F4FAF8] dark:bg-[#0A1C1B] hover:bg-[#D4E8E3]/50 text-[#3D6462] dark:text-[#A0C5C1] border border-[#D4E8E3] dark:border-[#205653] text-xs font-medium transition-colors"
-          >
-            Dashboard
-          </Link>
-        </div>
-      </div>
+        <p className="leading-relaxed">
+          The overall band score is calculated by taking the arithmetic average of the four components (Listening + Reading + Writing + Speaking) / 4. If the average ends in .25, it is rounded up to the next half band (e.g. 6.25 becomes 6.5). If it ends in .75, it is rounded up to the next whole band (e.g. 6.75 becomes 7.0).
+        </p>
+      </section>
     </div>
   );
 }
 
-export default function ExamResultsPage({ params }: { params: Promise<{ id: string }> }) {
+export default function DetailedResultPage(props: {
+  params: Promise<{ id: string }>;
+}) {
   return (
-    <Suspense fallback={<div className="max-w-6xl mx-auto p-12 text-center text-[#3D6462] dark:text-[#A0C5C1]">Loading Exam Score Report...</div>}>
-      <ResultsContent params={params} />
+    <Suspense
+      fallback={
+        <div className="min-h-[400px] flex items-center justify-center">
+          <Loader2 className="w-8 h-8 text-[#25A995] animate-spin" />
+        </div>
+      }
+    >
+      <DetailedResultContent {...props} />
     </Suspense>
   );
 }

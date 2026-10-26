@@ -4,7 +4,6 @@ import {
   hashPassword,
   createSession,
   SESSION_COOKIE_NAME,
-  SESSION_EXPIRY_DAYS,
 } from "@/server/auth/session";
 
 export async function POST(request: Request) {
@@ -131,7 +130,7 @@ export async function POST(request: Request) {
     });
 
     return response;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Registration error:", error);
     return NextResponse.json(
       { success: false, error: "Failed to create account due to server error. Please try again." },

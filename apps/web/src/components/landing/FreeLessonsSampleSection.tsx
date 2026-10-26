@@ -53,7 +53,7 @@ const SKILL_CARDS: SkillCardConfig[] = [
     desc: "Practise reading comprehension and learn how to identify key information.",
     descBn: "প্যাসেজের মূল ভাব অনুধাবন করুন এবং গুরুত্বপূর্ণ তথ্য শনাক্ত করার কৌশল শিখুন।",
     icon: BookOpen,
-    href: "/skills/reading",
+    href: "/lessons",
     badge: "Sample Exercise",
     badgeBn: "নমুনা অনুশীলন",
     accentColor: "text-blue-600 dark:text-blue-400",
@@ -75,7 +75,7 @@ const SKILL_CARDS: SkillCardConfig[] = [
     desc: "Build listening accuracy through audio-based practice and answer review.",
     descBn: "নেটিভ অডিও অনুশীলন এবং নির্ভুল উত্তরের মাধ্যমে শোনার দক্ষতা বৃদ্ধি করুন।",
     icon: Headphones,
-    href: "/skills/listening",
+    href: "/lessons",
     badge: "Sample Exercise",
     badgeBn: "নমুনা অনুশীলন",
     accentColor: "text-amber-600 dark:text-amber-400",
@@ -97,7 +97,7 @@ const SKILL_CARDS: SkillCardConfig[] = [
     desc: "Explore writing prompts and learn how structured feedback can improve your writing.",
     descBn: "রচনার বিষয়বস্তু বিশ্লেষণ করুন এবং কাঠামোগত ফিডব্যাকের মাধ্যমে উন্নতি করুন।",
     icon: FileText,
-    href: "/skills/writing",
+    href: "/lessons",
     badge: "Sample Exercise",
     badgeBn: "নমুনা অনুশীলন",
     accentColor: "text-violet-600 dark:text-violet-400",
@@ -119,7 +119,7 @@ const SKILL_CARDS: SkillCardConfig[] = [
     desc: "Explore speaking prompts and practise expressing your ideas with confidence.",
     descBn: "স্পিকিংয়ের বিষয়গুলো পর্যবেক্ষণ করুন এবং আত্মবিশ্বাসের সাথে কথা বলার অভ্যাস করুন।",
     icon: Mic,
-    href: "/skills/speaking",
+    href: "/lessons",
     badge: "Sample Exercise",
     badgeBn: "নমুনা অনুশীলন",
     accentColor: "text-[#FF7043] dark:text-[#FFA285]",
@@ -409,10 +409,10 @@ export function FreeLessonsSampleSection() {
                           <span>{isBn ? "পুনরায় চেষ্টা করুন" : "Try Again"}</span>
                         </button>
                         <Link
-                          href="/skills/reading"
+                          href="/lessons"
                           className="inline-flex items-center gap-1.5 text-xs font-bold text-[#25A995] hover:underline"
                         >
-                          <span>{isBn ? "সম্পূর্ণ রিডিং ল্যাব খুলুন" : "Open Full Reading Lab"}</span>
+                          <span>{isBn ? "সম্পূর্ণ রিডিং লেসন খুলুন" : "Explore Reading Lessons"}</span>
                           <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
                         </Link>
                       </div>
@@ -466,10 +466,10 @@ export function FreeLessonsSampleSection() {
                   </span>
                 </div>
                 <Link
-                  href="/skills/listening"
+                  href="/lessons"
                   className="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs whitespace-nowrap transition-colors"
                 >
-                  {isBn ? "লিসেনিং ল্যাব খুলুন" : "Open Listening Lab"}
+                  {isBn ? "লিসেনিং লেসন দেখুন" : "Explore Listening Lessons"}
                 </Link>
               </div>
             </div>
@@ -510,10 +510,10 @@ export function FreeLessonsSampleSection() {
                   * {isBn ? "মূল্যায়নগুলো অনানুষ্ঠানিক অনুশীলন নির্দেশিকা হিসেবে প্রদত্ত।" : "Evaluation rubrics provided as unofficial practice guidelines."}
                 </span>
                 <Link
-                  href="/skills/writing"
+                  href="/lessons"
                   className="inline-flex items-center gap-1.5 font-bold text-violet-600 dark:text-violet-400 hover:underline"
                 >
-                  <span>{isBn ? "রাইটিং এডিটর ও মডেল রচনা দেখুন" : "Explore Writing Editor & Model Essays"}</span>
+                  <span>{isBn ? "রাইটিং লেসন ও মডেল রচনা দেখুন" : "Explore Writing Lessons & Models"}</span>
                   <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
                 </Link>
               </div>
@@ -550,10 +550,10 @@ export function FreeLessonsSampleSection() {
                   * {isBn ? "স্পিকিং অডিও রেকর্ডার ও স্বয়ংক্রিয় ট্রান্সক্রিপশন স্পিকিং ল্যাবে সংরক্ষিত।" : "Microphone audio recording and unofficial AI fluency breakdown are available in the Speaking Lab."}
                 </span>
                 <Link
-                  href="/skills/speaking"
+                  href="/lessons"
                   className="px-4 py-2 rounded-xl bg-[#FF7043] hover:bg-[#e85a2f] text-white font-bold text-xs transition-colors shadow-xs"
                 >
-                  {isBn ? "স্পিকিং ল্যাবে প্র্যাকটিস করুন" : "Practise in Speaking Lab"}
+                  {isBn ? "স্পিকিং লেসন দেখুন" : "Explore Speaking Lessons"}
                 </Link>
               </div>
             </div>

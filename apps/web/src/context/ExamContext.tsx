@@ -206,65 +206,11 @@ export const ExamProvider: React.FC<{ children: React.ReactNode }> = ({ children
             targetDate: p.targetDate || "2026-12-15",
             dailyMinutes: p.dailyMinutes || 60,
             onboarded: true,
-            voiceConsent: p.consents?.some((c: any) => c.type === "recording" && c.granted) ?? true,
-            aiConsent: p.consents?.some((c: any) => c.type === "ai_processing" && c.granted) ?? true,
-            modelTrainingOptIn: p.consents?.some((c: any) => c.type === "model_improvement" && c.granted) ?? false,
+            voiceConsent: p.consents?.some((c: { type: string; granted: boolean }) => c.type === "recording" && c.granted) ?? true,
+            aiConsent: p.consents?.some((c: { type: string; granted: boolean }) => c.type === "ai_processing" && c.granted) ?? true,
+            modelTrainingOptIn: p.consents?.some((c: { type: string; granted: boolean }) => c.type === "model_improvement" && c.granted) ?? false,
             ageDeclared: true,
           });
-        }
-      })
-      .catch(() => {});
-
-    // 2. Fetch real study tasks
-    fetch("/api/study-plan")
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data && data.tasks && data.tasks.length > 0) {
-          setStudyTasks(data.tasks);
-        }
-      })
-      .catch(() => {});
-
-    // 3. Fetch real mistake notes
-    fetch("/api/notebook")
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data && data.mistakes && data.mistakes.length > 0) {
-          setMistakes(
-            data.mistakes.map((m: any) => ({
-              id: m.id,
-              skill: m.skill,
-              questionType: m.questionType || "General Question",
-              errorTag: m.errorTag || "trap",
-              questionPrompt: m.questionPrompt || "Practice question",
-              studentAnswer: m.studentAnswer || "",
-              correctAnswer: m.correctAnswer || "",
-              reasoning: m.reasoning || "",
-              retryStatus: m.retryStatus === "mastered" ? "mastered" : "unresolved",
-            }))
-          );
-        }
-      })
-      .catch(() => {});
-
-    // 4. Fetch real vocabulary
-    fetch("/api/vocabulary")
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data && data.vocabulary && data.vocabulary.length > 0) {
-          setVocabulary(
-            data.vocabulary.map((v: any) => ({
-              id: v.id,
-              word: v.word,
-              partOfSpeech: v.partOfSpeech,
-              bandLevel: v.bandLevel,
-              meaning: v.meaning,
-              collocation: v.collocation || "",
-              exampleSentence: v.exampleSentence || "",
-              nextReviewDays: v.intervalDays || 1,
-              mastery: v.mastery || "learning",
-            }))
-          );
         }
       })
       .catch(() => {});
@@ -292,44 +238,18 @@ export const ExamProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const tempId = `m-${Date.now()}`;
     const newNote: MistakeNote = { ...item, id: tempId };
     setMistakes((prev) => [newNote, ...prev]);
-
-    fetch("/api/notebook", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        skill: item.skill,
-        errorTag: item.errorTag,
-        userNotes: item.questionPrompt,
-        originalAnswer: item.studentAnswer,
-        correctReasoning: item.reasoning,
-      }),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data && data.id) {
-          setMistakes((prev) => prev.map((m) => (m.id === tempId ? { ...m, id: data.id } : m)));
-        }
-      })
-      .catch(() => {});
   };
 
   const resolveMistake = (id: string) => {
-    let nextStatus: "mastered" | "unresolved" = "mastered";
     setMistakes((prev) =>
       prev.map((m) => {
         if (m.id === id) {
-          nextStatus = m.retryStatus === "mastered" ? "unresolved" : "mastered";
+          const nextStatus = m.retryStatus === "mastered" ? "unresolved" : "mastered";
           return { ...m, retryStatus: nextStatus };
         }
         return m;
       })
     );
-
-    fetch(`/api/notebook/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: nextStatus === "mastered" ? "mastered" : "pending" }),
-    }).catch(() => {});
   };
 
   const toggleVocabularyMastery = (id: string) => {
@@ -343,22 +263,12 @@ export const ExamProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return v;
       })
     );
-
-    fetch(`/api/vocabulary/${id}/review`, {
-      method: "POST",
-    }).catch(() => {});
   };
 
   const toggleTask = (id: string) => {
     setStudyTasks((prev) =>
       prev.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t))
     );
-
-    fetch("/api/study-plan", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ taskId: id }),
-    }).catch(() => {});
   };
 
   return (

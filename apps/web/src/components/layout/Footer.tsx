@@ -127,59 +127,51 @@ export const Footer: React.FC = () => {
             </nav>
           </div>
 
-          {/* Column 3: Learning Navigation */}
+          {/* Column 3: Preparation & Account */}
           <div className="sm:col-span-1 lg:col-span-3 space-y-4">
             <h3 className="text-xs font-bold text-[#123C3A] dark:text-[#F4FAF8] uppercase tracking-wider">
-              {isBn ? "লার্নিং ও অনুশীলন" : "Learning"}
+              {isBn ? "প্রস্তুতি ও অ্যাকাউন্ট" : "Get Started"}
             </h3>
-            <nav aria-label={isBn ? "লার্নিং নেভিগেশন" : "Learning Navigation"}>
+            <nav aria-label={isBn ? "প্রস্তুতি ও অ্যাকাউন্ট নেভিগেশন" : "Preparation and Account Navigation"}>
               <ul className="space-y-2.5 text-xs sm:text-sm">
                 <li>
                   <Link
-                    href="/skills/reading"
-                    className="hover:text-[#25A995] dark:hover:text-[#25A995] transition-colors duration-150 inline-block py-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] rounded"
+                    href="/onboarding"
+                    className="hover:text-[#25A995] dark:hover:text-[#25A995] transition-colors duration-150 inline-block py-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] rounded font-medium"
                   >
-                    {isBn ? "রিডিং প্র্যাকটিস" : "Reading Practice"}
+                    {isBn ? "প্রস্তুতি শুরু করুন" : "Start Preparation"}
                   </Link>
                 </li>
                 <li>
                   <Link
-                    href="/skills/listening"
+                    href="/practice"
                     className="hover:text-[#25A995] dark:hover:text-[#25A995] transition-colors duration-150 inline-block py-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] rounded"
                   >
-                    {isBn ? "লিসেনিং প্র্যাকটিস" : "Listening Practice"}
+                    {isBn ? "অনুশীলন হাব" : "Practice Hub"}
                   </Link>
                 </li>
                 <li>
                   <Link
-                    href="/skills/writing"
+                    href="/lessons"
                     className="hover:text-[#25A995] dark:hover:text-[#25A995] transition-colors duration-150 inline-block py-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] rounded"
                   >
-                    {isBn ? "রাইটিং প্র্যাকটিস" : "Writing Practice"}
+                    {isBn ? "লেসন কারিকুলাম" : "Lessons Curriculum"}
                   </Link>
                 </li>
                 <li>
                   <Link
-                    href="/skills/speaking"
+                    href="/login"
                     className="hover:text-[#25A995] dark:hover:text-[#25A995] transition-colors duration-150 inline-block py-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] rounded"
                   >
-                    {isBn ? "স্পিকিং প্র্যাকটিস" : "Speaking Practice"}
+                    {isBn ? "অ্যাকাউন্টে সাইন ইন" : "Sign In"}
                   </Link>
                 </li>
                 <li>
                   <Link
-                    href="/mock-centre"
-                    className="hover:text-[#25A995] dark:hover:text-[#25A995] transition-colors duration-150 inline-block py-0.5 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] rounded"
-                  >
-                    {isBn ? "সাপ্তাহিক মক টেস্ট" : "Weekly Mock Tests"}
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/tutor"
+                    href="/signup"
                     className="hover:text-[#25A995] dark:hover:text-[#25A995] transition-colors duration-150 inline-block py-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] rounded"
                   >
-                    {isBn ? "AI গৃহশিক্ষক (AI Tutor)" : "AI Tutor"}
+                    {isBn ? "নতুন অ্যাকাউন্ট তৈরি" : "Create Account"}
                   </Link>
                 </li>
               </ul>

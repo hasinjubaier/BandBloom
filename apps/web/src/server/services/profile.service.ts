@@ -1,4 +1,4 @@
-import { query, withTransaction } from "@/server/db";
+import { query } from "@/server/db";
 
 export interface StudentProfileData {
   id: string;
@@ -100,7 +100,7 @@ export async function updateStudentProfile(
   }
 ): Promise<StudentProfileData | null> {
   const fields: string[] = [];
-  const values: any[] = [];
+  const values: unknown[] = [];
   let paramIdx = 1;
 
   if (updates.fullName !== undefined) {

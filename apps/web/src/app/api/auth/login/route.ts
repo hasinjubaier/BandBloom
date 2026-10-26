@@ -72,16 +72,19 @@ export async function POST(request: Request) {
     // 3. Create session & set secure cookie
     const { token, expiresAt } = await createSession(user.id, request);
 
+    const url = new URL(request.url);
+    const customRedirect = url.searchParams.get("redirect") || "/dashboard";
+
     const response = NextResponse.json({
       success: true,
-      message: "Sign in successful! Redirecting to your student dashboard...",
+      message: "Sign in successful! Redirecting...",
       user: {
         id: user.id,
         email: user.email,
         name: user.full_name || "Learner",
         role: user.role,
       },
-      redirectTo: "/dashboard",
+      redirectTo: customRedirect,
     });
 
     const isProd = process.env.NODE_ENV === "production";

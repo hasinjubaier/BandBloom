@@ -10,17 +10,35 @@ export interface AppShellProps {
   children: React.ReactNode;
 }
 
+import { PortalShell } from "@/components/portal/PortalShell";
+
 function AppShellInner({ children }: AppShellProps) {
   const pathname = usePathname();
-  const isExamRoute = pathname?.startsWith("/mock-centre/exam");
   const isAuthRoute =
     pathname === "/login" ||
     pathname === "/signup" ||
-    pathname === "/forgot-password";
+    pathname === "/forgot-password" ||
+    pathname === "/onboarding";
 
-  // In full-screen exam simulation or dedicated auth flows (e.g. /login),
+  const isPortalRoute =
+    pathname === "/dashboard" ||
+    pathname === "/study-plan" ||
+    pathname.startsWith("/mock-centre") ||
+    pathname.startsWith("/skills") ||
+    pathname === "/tutor" ||
+    pathname === "/vocabulary" ||
+    pathname === "/notebook" ||
+    pathname.startsWith("/results") ||
+    pathname === "/settings";
+
+  // Dedicated portal shell for authenticated student features
+  if (isPortalRoute) {
+    return <PortalShell>{children}</PortalShell>;
+  }
+
+  // In dedicated auth flows (e.g. /login),
   // render a focused layout without the marketing Navbar, DisclaimerBanner, or Footer.
-  if (isExamRoute || isAuthRoute) {
+  if (isAuthRoute) {
     return <main className="flex-1 flex flex-col">{children}</main>;
   }
 

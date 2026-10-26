@@ -260,10 +260,10 @@ export function AITutorFeedbackSection() {
           {/* Action Row */}
           <div className="pt-6 mt-6 border-t border-[#D4E8E3]/70 dark:border-[#205653]/70 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
             <Link
-              href="/tutor"
+              href="/onboarding"
               className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#25A995] hover:bg-[#123C3A] text-white font-semibold text-xs sm:text-sm shadow-md shadow-[#25A995]/20 border border-transparent transition-all group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995]"
             >
-              <span>{isBn ? "সম্পূর্ণ AI টিউটর খুলুন" : "Explore Full AI Tutor"}</span>
+              <span>{isBn ? "প্রস্তুতি শুরু করুন" : "Start Preparation"}</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" aria-hidden="true" />
             </Link>
 
@@ -351,10 +351,10 @@ export function AITutorFeedbackSection() {
 
             <div className="pt-2 border-t border-[#D4E8E3]/60 dark:border-[#205653]/60">
               <Link
-                href="/skills/writing"
+                href="/practice"
                 className="inline-flex items-center gap-1.5 text-xs font-semibold text-violet-600 dark:text-violet-400 hover:underline"
               >
-                <span>{isBn ? "রাইটিং ল্যাবে প্র্যাকটিস করুন" : "Open Writing Evaluator"}</span>
+                <span>{isBn ? "রাইটিং প্র্যাকটিস দেখুন" : "Explore Writing Practice"}</span>
                 <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
               </Link>
             </div>
@@ -432,10 +432,10 @@ export function AITutorFeedbackSection() {
 
             <div className="pt-2 border-t border-[#D4E8E3]/60 dark:border-[#205653]/60">
               <Link
-                href="/skills/speaking"
+                href="/practice"
                 className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#FF7043] dark:text-[#FFA285] hover:underline"
               >
-                <span>{isBn ? "স্পিকিং ল্যাবে প্র্যাকটিস করুন" : "Open Speaking Lab & Recorder"}</span>
+                <span>{isBn ? "স্পিকিং প্র্যাকটিস দেখুন" : "Explore Speaking Practice"}</span>
                 <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
               </Link>
             </div>
@@ -493,10 +493,10 @@ export function AITutorFeedbackSection() {
 
           <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3.5">
             <Link
-              href="/tutor"
+              href="/onboarding"
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#25A995] hover:bg-[#123C3A] text-white font-semibold text-xs sm:text-sm shadow-md shadow-[#25A995]/20 border border-transparent transition-all group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] focus-visible:ring-offset-2"
             >
-              <span>{isBn ? "AI টিউটর অন্বেষণ করুন" : "Explore AI Tutor"}</span>
+              <span>{isBn ? "প্রস্তুতি শুরু করুন" : "Start Preparation"}</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" aria-hidden="true" />
             </Link>
 

@@ -11,7 +11,7 @@ export async function GET(request: Request) {
       FROM lessons
       WHERE status = 'published'
     `;
-    const params: any[] = [];
+    const params: unknown[] = [];
 
     if (skill) {
       sql += ` AND (skill = $1 OR skill = 'general')`;
@@ -26,7 +26,7 @@ export async function GET(request: Request) {
       success: true,
       lessons: res.rows,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("List lessons error:", error);
     return NextResponse.json(
       { success: false, error: "Failed to load lessons." },

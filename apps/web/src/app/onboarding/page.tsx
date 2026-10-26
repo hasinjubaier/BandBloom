@@ -80,11 +80,10 @@ export default function OnboardingPage() {
           <div className="space-y-4">
             <div
               onClick={() => setTestType("academic")}
-              className={`p-5 rounded-2xl border cursor-pointer transition-all ${
-                testType === "academic"
+              className={`p-5 rounded-2xl border cursor-pointer transition-all ${testType === "academic"
                   ? "bg-[#E8F7F4] border-[#25A995] text-[#123C3A] dark:bg-[#25A995]/20 dark:border-[#25A995] dark:text-[#F4FAF8] shadow-sm"
                   : "bg-[#F4FAF8] dark:bg-[#0A1C1B]/80 border-[#D4E8E3] dark:border-[#205653] text-[#3D6462] dark:text-[#A0C5C1] hover:border-[#25A995]/50"
-              }`}
+                }`}
             >
               <div className="flex items-center gap-3 mb-2">
                 <BookOpen className="w-5 h-5 text-[#25A995]" />
@@ -97,11 +96,10 @@ export default function OnboardingPage() {
 
             <div
               onClick={() => setTestType("general_training")}
-              className={`p-5 rounded-2xl border cursor-pointer transition-all ${
-                testType === "general_training"
+              className={`p-5 rounded-2xl border cursor-pointer transition-all ${testType === "general_training"
                   ? "bg-[#E8F7F4] border-[#25A995] text-[#123C3A] dark:bg-[#25A995]/20 dark:border-[#25A995] dark:text-[#F4FAF8] shadow-sm"
                   : "bg-[#F4FAF8] dark:bg-[#0A1C1B]/80 border-[#D4E8E3] dark:border-[#205653] text-[#3D6462] dark:text-[#A0C5C1] hover:border-[#25A995]/50"
-              }`}
+                }`}
             >
               <div className="flex items-center gap-3 mb-2">
                 <Briefcase className="w-5 h-5 text-[#25A995]" />
@@ -121,16 +119,15 @@ export default function OnboardingPage() {
               <label className="block text-xs font-semibold text-[#3D6462] dark:text-[#A0C5C1] mb-2">
                 Target Overall Band Score: <strong className="text-[#25A995] text-sm">Band {targetBand.toFixed(1)}</strong>
               </label>
-              <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-                {[6.0, 6.5, 7.0, 7.5, 8.0, 8.5].map((b) => (
+              <div className="grid grid-cols-3 sm:grid-cols-7 gap-2">
+                {[6.0, 6.5, 7.0, 7.5, 8.0, 8.5, 9.0].map((b) => (
                   <button
                     key={b}
                     onClick={() => setTargetBand(b)}
-                    className={`py-2 rounded-xl text-xs font-bold transition-all ${
-                      targetBand === b
+                    className={`py-2 rounded-xl text-xs font-bold transition-all ${targetBand === b
                         ? "bg-[#25A995] text-white shadow-md shadow-[#25A995]/25"
                         : "bg-[#F4FAF8] dark:bg-[#0A1C1B] border border-[#D4E8E3] dark:border-[#205653] text-[#3D6462] dark:text-[#A0C5C1] hover:text-[#123C3A] dark:hover:text-[#F4FAF8]"
-                    }`}
+                      }`}
                   >
                     Band {b.toFixed(1)}
                   </button>
@@ -163,11 +160,10 @@ export default function OnboardingPage() {
               <div
                 key={plan.mins}
                 onClick={() => setDailyMinutes(plan.mins)}
-                className={`p-4 rounded-2xl border cursor-pointer transition-all ${
-                  dailyMinutes === plan.mins
+                className={`p-4 rounded-2xl border cursor-pointer transition-all ${dailyMinutes === plan.mins
                     ? "bg-[#E8F7F4] border-[#25A995] text-[#123C3A] dark:bg-[#25A995]/20 dark:border-[#25A995] dark:text-[#F4FAF8] shadow-sm"
                     : "bg-[#F4FAF8] dark:bg-[#0A1C1B]/80 border-[#D4E8E3] dark:border-[#205653] text-[#3D6462] dark:text-[#A0C5C1] hover:border-[#25A995]/50"
-                }`}
+                  }`}
               >
                 <div className="flex items-center justify-between mb-1">
                   <h4 className="text-sm font-bold text-[#123C3A] dark:text-[#F4FAF8]">{plan.title}</h4>
@@ -203,7 +199,7 @@ export default function OnboardingPage() {
                   className="mt-0.5 accent-[#25A995] rounded"
                 />
                 <span>
-                  <strong className="text-[#123C3A] dark:text-[#F4FAF8]">AI Scoring Notice:</strong> I understand that BandBloom's rubric evaluations and estimated bands are practice diagnostics and do not guarantee official test outcomes.
+                  <strong className="text-[#123C3A] dark:text-[#F4FAF8]">AI Scoring Notice:</strong> I understand that BandBloom&apos;s rubric evaluations and estimated bands are practice diagnostics and do not guarantee official test outcomes.
                 </span>
               </label>
 

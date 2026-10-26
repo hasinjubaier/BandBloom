@@ -1,36 +1,33 @@
 import { NextResponse } from "next/server";
-import { getSessionUser } from "@/server/auth/session";
+import { requireAuth } from "@/server/auth/session";
 import {
-  getActiveStudyPlan,
-  toggleStudyPlanTask,
-} from "@/server/services/learning.service";
+  getStudentStudyPlan,
+  toggleTaskCompletion,
+} from "@/server/services/study-plan.service";
 
 export async function GET(request: Request) {
   try {
-    const user = await getSessionUser(request);
-    const userId = user?.id || "33333333-3333-3333-3333-333333333333";
+    const user = await requireAuth(request);
+    const plan = await getStudentStudyPlan(user.id);
 
-    const tasks = await getActiveStudyPlan(userId);
     return NextResponse.json({
       success: true,
-      tasks,
+      plan,
     });
-  } catch (error: any) {
-    console.error("Get study plan error:", error);
+  } catch (error: unknown) {
+    const err = error as { status?: number; message?: string };
     return NextResponse.json(
-      { success: false, error: "Failed to load study plan." },
-      { status: 500 }
+      { success: false, error: err.message || "Failed to load study plan." },
+      { status: err.status || 401 }
     );
   }
 }
 
 export async function PATCH(request: Request) {
   try {
-    const user = await getSessionUser(request);
-    const userId = user?.id || "33333333-3333-3333-3333-333333333333";
-
+    const user = await requireAuth(request);
     const body = await request.json();
-    const { taskId } = body;
+    const { taskId, completed } = body;
 
     if (!taskId) {
       return NextResponse.json(
@@ -39,16 +36,18 @@ export async function PATCH(request: Request) {
       );
     }
 
-    const updatedTasks = await toggleStudyPlanTask(userId, taskId);
+    const updatedPlan = await toggleTaskCompletion(user.id, taskId, completed);
+
     return NextResponse.json({
       success: true,
-      tasks: updatedTasks,
+      message: "Study task updated successfully.",
+      plan: updatedPlan,
     });
-  } catch (error: any) {
-    console.error("Toggle study task error:", error);
+  } catch (error: unknown) {
+    const err = error as { status?: number; message?: string };
     return NextResponse.json(
-      { success: false, error: "Failed to update study task." },
-      { status: 500 }
+      { success: false, error: err.message || "Failed to update study task." },
+      { status: err.status || 500 }
     );
   }
 }

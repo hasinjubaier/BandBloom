@@ -94,41 +94,95 @@ export async function getSessionUser(req: Request): Promise<SessionUser | null> 
   const token = extractSessionToken(req);
   if (!token) return null;
 
-  const tokenHash = hashToken(token);
-  const now = new Date().toISOString();
+  try {
+    const tokenHash = hashToken(token);
+    const now = new Date().toISOString();
 
-  const res = await query<SessionUser>(
-    `SELECT 
-       u.id, 
-       u.email, 
-       u.role, 
-       u.status,
-       COALESCE(p.full_name, 'Learner') AS "fullName",
-       COALESCE(p.test_type, 'academic') AS "testType",
-       p.target_band AS "targetBand"
-     FROM sessions s
-     JOIN users u ON s.user_id = u.id
-     LEFT JOIN profiles p ON u.id = p.user_id
-     WHERE s.token_hash = $1
-       AND s.expires_at > $2
-       AND u.status = 'active'
-     LIMIT 1`,
-    [tokenHash, now]
-  );
+    const res = await query<SessionUser>(
+      `SELECT 
+         u.id, 
+         u.email, 
+         u.role, 
+         u.status,
+         COALESCE(p.full_name, 'Learner') AS "fullName",
+         COALESCE(p.test_type, 'academic') AS "testType",
+         p.target_band AS "targetBand"
+       FROM sessions s
+       JOIN users u ON s.user_id = u.id
+       LEFT JOIN profiles p ON u.id = p.user_id
+       WHERE s.token_hash = $1
+         AND s.expires_at > $2
+         AND u.status = 'active'
+       LIMIT 1`,
+      [tokenHash, now]
+    );
 
-  if (res.rows.length === 0) {
-    return null;
+    if (res.rows.length === 0) {
+      return null;
+    }
+
+    return res.rows[0];
+  } catch (err: unknown) {
+    const isDbOutage =
+      err &&
+      typeof err === "object" &&
+      ("code" in err || (err instanceof Error && err.message.includes("ECONNREFUSED")));
+    if (isDbOutage) {
+      console.error("[Database Connection Failure in Auth]:", err instanceof Error ? err.message : String(err));
+      throw new ServiceUnavailableError(
+        "Service is temporarily unavailable due to a database outage. Please try again shortly.",
+        503
+      );
+    }
+    console.error("[Unexpected Session Lookup Error]:", err instanceof Error ? err.message : String(err));
+    throw err;
   }
+}
 
-  return res.rows[0];
+export class AuthError extends Error {
+  status: number;
+  constructor(message = "Authentication required to access this resource.", status = 401) {
+    super(message);
+    this.status = status;
+    this.name = "AuthError";
+  }
+}
+
+export class ForbiddenError extends Error {
+  status: number;
+  constructor(message = "Access denied. Insufficient permissions.", status = 403) {
+    super(message);
+    this.status = status;
+    this.name = "ForbiddenError";
+  }
+}
+
+export class ServiceUnavailableError extends Error {
+  status: number;
+  constructor(
+    message = "Service is temporarily unavailable due to a database outage. Please try again shortly.",
+    status = 503
+  ) {
+    super(message);
+    this.status = status;
+    this.name = "ServiceUnavailableError";
+  }
 }
 
 export async function requireAuth(req: Request): Promise<SessionUser> {
+  const token = extractSessionToken(req);
+  if (!token) {
+    throw new AuthError("Authentication required to access this resource.", 401);
+  }
+
   const user = await getSessionUser(req);
   if (!user) {
-    const error: any = new Error("Authentication required to access this resource.");
-    error.status = 401;
-    throw error;
+    throw new AuthError("Session expired or invalid. Please sign in again.", 401);
   }
+
+  if (user.status !== "active") {
+    throw new ForbiddenError("Your account is currently suspended or inactive.", 403);
+  }
+
   return user;
 }

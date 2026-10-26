@@ -36,9 +36,10 @@ export function GoalBandSelector() {
             return (
               <button
                 key={band}
+                type="button"
                 onClick={() => selectBand(band)}
                 aria-pressed={isSelected}
-                className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold min-h-[40px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] focus-visible:ring-offset-2 transition-all ${
+                className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold min-h-[40px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] focus-visible:ring-offset-2 transition-all cursor-pointer ${
                   isSelected
                     ? "bg-[#25A995] text-white shadow-md shadow-[#25A995]/30 scale-105"
                     : "text-[#3D6462] hover:text-[#123C3A] hover:bg-[#F4FAF8] dark:text-[#A0C5C1] dark:hover:text-[#F4FAF8] dark:hover:bg-[#0A1C1B]"
@@ -53,3 +54,4 @@ export function GoalBandSelector() {
     </div>
   );
 }
+

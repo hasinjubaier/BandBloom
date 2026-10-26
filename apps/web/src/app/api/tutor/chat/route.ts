@@ -1,36 +1,31 @@
 import { NextResponse } from "next/server";
-import { getSessionUser } from "@/server/auth/session";
-import { answerTutorQuestion } from "@/server/services/rag.service";
+import { requireAuth } from "@/server/auth/session";
+import { askIeltsTutor } from "@/server/services/tutor.service";
 
 export async function POST(request: Request) {
   try {
-    const user = await getSessionUser(request);
-    const userId = user?.id || "33333333-3333-3333-3333-333333333333";
-
+    const user = await requireAuth(request);
     const body = await request.json();
-    const { message, skill, language } = body;
+    const { prompt, skill } = body;
 
-    if (!message || typeof message !== "string" || message.trim().length < 2) {
+    if (!prompt || typeof prompt !== "string") {
       return NextResponse.json(
-        { success: false, error: "Please enter a valid question for the tutor." },
+        { success: false, error: "Prompt message is required." },
         { status: 400 }
       );
     }
 
-    const response = await answerTutorQuestion(userId, message, {
-      skill,
-      language: language === "bn" ? "bn" : "en",
-    });
+    const tutorResult = await askIeltsTutor(user.id, prompt, skill);
 
     return NextResponse.json({
       success: true,
-      ...response,
+      ...tutorResult,
     });
-  } catch (error: any) {
-    console.error("Tutor chat error:", error);
+  } catch (error: unknown) {
+    const err = error as { status?: number; message?: string };
     return NextResponse.json(
-      { success: false, error: error.message || "Failed to process question." },
-      { status: 400 }
+      { success: false, error: err.message || "Failed to process tutor query." },
+      { status: err.status || 500 }
     );
   }
 }

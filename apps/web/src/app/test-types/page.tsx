@@ -70,7 +70,7 @@ export default function TestTypesPage() {
 
           <div className="pt-2">
             <Link
-              href="/skills/reading"
+              href="/practice"
               className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#25A995] hover:opacity-80"
             >
               <span>Practice Academic Reading</span>
@@ -116,7 +116,7 @@ export default function TestTypesPage() {
 
           <div className="pt-2">
             <Link
-              href="/skills/writing"
+              href="/practice"
               className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#FF8A65] hover:opacity-80"
             >
               <span>Practice GT Writing Letters</span>

@@ -1,451 +1,618 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
-  Compass,
-  Play,
-  Calendar,
-  Clock,
+  Sparkles,
+  ArrowRight,
   Target,
+  Clock,
+  CheckCircle2,
+  CalendarCheck,
+  FileCheck2,
   BookOpen,
   Headphones,
-  FileText,
+  Edit3,
   Mic,
-  AlertTriangle,
+  Bot,
+  SpellCheck,
   Bookmark,
-  CheckCircle2,
-  ArrowRight,
+  AlertCircle,
+  PlayCircle,
   TrendingUp,
-  BrainCircuit,
+  RefreshCw,
   Award,
-  Layers,
-  Sparkles,
-  ExternalLink,
 } from "lucide-react";
-import { useExam } from "@/context/ExamContext";
-import { useLanguage } from "@/context/LanguageContext";
-import { ScoreCalculatorModal } from "@/components/ScoreCalculatorModal";
+import { StudentDashboardData } from "@/server/services/dashboard.service";
 
-export default function DashboardPage() {
-  const { language } = useLanguage();
-  const { profile, skillScores, calculateOverallBand, mistakes, vocabulary, studyTasks } = useExam();
-  const [calcOpen, setCalcOpen] = useState(false);
+export default function StudentDashboardPage() {
+  const [data, setData] = useState<StudentDashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [togglingTaskId, setTogglingTaskId] = useState<string | null>(null);
 
-  const overallBand = calculateOverallBand(
-    skillScores.listening,
-    skillScores.reading,
-    skillScores.writing,
-    skillScores.speaking
-  );
+  const fetchDashboardData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/dashboard");
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || "Unable to load dashboard data.");
+      }
+      setData(json.data);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to load dashboard.";
+      setError(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const pendingTasks = studyTasks.filter((t) => !t.completed);
-  const nextTask = pendingTasks[0] || studyTasks[0];
+  useEffect(() => {
+    let isMounted = true;
+    fetch("/api/dashboard")
+      .then((res) => res.json())
+      .then((json) => {
+        if (!isMounted) return;
+        if (json.success && json.data) {
+          setData(json.data);
+        } else {
+          setError(json.error || "Unable to load dashboard data.");
+        }
+      })
+      .catch((err: unknown) => {
+        if (!isMounted) return;
+        const msg = err instanceof Error ? err.message : "Failed to load dashboard.";
+        setError(msg);
+      })
+      .finally(() => {
+        if (isMounted) setLoading(false);
+      });
 
-  const unresolvedMistakes = mistakes.filter((m) => m.retryStatus === "unresolved");
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const handleToggleTask = async (taskId: string, currentCompleted: boolean) => {
+    if (!data) return;
+    setTogglingTaskId(taskId);
+
+    // Optimistic UI update
+    setData((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        todayPlan: {
+          ...prev.todayPlan,
+          tasks: prev.todayPlan.tasks.map((t) =>
+            t.id === taskId ? { ...t, completed: !currentCompleted } : t
+          ),
+        },
+      };
+    });
+
+    try {
+      const res = await fetch("/api/study-plan", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ taskId, completed: !currentCompleted }),
+      });
+      if (!res.ok) {
+        // Rollback on failure
+        fetchDashboardData();
+      }
+    } catch {
+      fetchDashboardData();
+    } finally {
+      setTogglingTaskId(null);
+    }
+  };
+
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good morning";
+    if (hour < 18) return "Good afternoon";
+    return "Good evening";
+  };
+
+  if (loading) {
+    return (
+      <div className="space-y-6 animate-pulse">
+        <div className="h-44 bg-white dark:bg-[#123C3A] rounded-3xl border border-[#D4E8E3] dark:border-[#205653]" />
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div
+              key={i}
+              className="h-32 bg-white dark:bg-[#123C3A] rounded-2xl border border-[#D4E8E3] dark:border-[#205653]"
+            />
+          ))}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 h-72 bg-white dark:bg-[#123C3A] rounded-3xl border border-[#D4E8E3] dark:border-[#205653]" />
+          <div className="h-72 bg-white dark:bg-[#123C3A] rounded-3xl border border-[#D4E8E3] dark:border-[#205653]" />
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <div className="p-8 rounded-3xl bg-white dark:bg-[#123C3A] border border-[#D4E8E3] dark:border-[#205653] text-center space-y-4 max-w-lg mx-auto my-12 shadow-sm">
+        <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto">
+          <AlertCircle className="w-6 h-6" />
+        </div>
+        <h2 className="text-lg font-bold text-[#123C3A] dark:text-[#F4FAF8]">
+          Unable to Load Student Dashboard
+        </h2>
+        <p className="text-xs text-[#67839A] dark:text-[#A0C5C1]">{error}</p>
+        <button
+          onClick={fetchDashboardData}
+          className="px-4 py-2 rounded-xl bg-[#25A995] hover:bg-[#123C3A] text-white text-xs font-semibold inline-flex items-center gap-1.5 transition-colors"
+        >
+          <RefreshCw className="w-3.5 h-3.5" />
+          <span>Retry Connection</span>
+        </button>
+      </div>
+    );
+  }
+
+  const { student, overview, todayPlan, continueLearning, recentActivities, stats } = data;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full space-y-10">
-      {/* 1. Header & Hierarchy Tier 1: Action bar, Upcoming Mock & Target Date */}
-      <div className="bg-white dark:bg-[#123C3A] border border-[#D4E8E3] dark:border-[#205653] rounded-3xl p-6 sm:p-8 shadow-sm">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+    <div className="space-y-6 sm:space-y-8">
+      {/* ========================================================================= */}
+      {/* A. Personalized Welcome Hero Card */}
+      {/* ========================================================================= */}
+      <section
+        className="relative overflow-hidden rounded-3xl bg-linear-to-br from-white via-[#F4FAF8] to-[#E8F7F4] dark:from-[#123C3A] dark:via-[#0F3230] dark:to-[#0A2422] p-6 sm:p-8 border border-[#D4E8E3] dark:border-[#205653] shadow-sm"
+        aria-labelledby="welcome-heading"
+      >
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E8F7F4] dark:bg-[#25A995]/20 border border-[#25A995]/30 text-[#25A995] text-xs font-semibold">
-              <Compass className="w-3.5 h-3.5 text-[#25A995]" />
-              <span>
-                {profile.testType === "academic" ? "IELTS Academic Track" : "IELTS General Training Track"}
-              </span>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#25A995]/15 text-[#25A995] text-xs font-bold uppercase tracking-wider">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>IELTS Preparation Journey</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-[#123C3A] dark:text-[#F4FAF8] tracking-tight">
-              {language === "bn" ? "শিক্ষার্থী ড্যাশবোর্ড" : "Learner Command Center"}
-            </h1>
-            <p className="text-xs sm:text-sm text-[#3D6462] dark:text-[#A0C5C1]">
-              {language === "bn"
-                ? "আপনার বর্তমান প্রাক্কলিত ব্যান্ড স্কোর ও দৈনিক প্রস্তুতির অগ্রগতি ট্র্যাক করুন।"
-                : "Authoritative progress tracking, weak-area analytics, and computer-test preparation."}
+            <h2
+              id="welcome-heading"
+              className="text-2xl sm:text-3xl font-extrabold text-[#123C3A] dark:text-[#F4FAF8] tracking-tight"
+            >
+              {getGreeting()}, {student.fullName}!
+            </h2>
+            <p className="text-xs sm:text-sm text-[#3D6462] dark:text-[#A0C5C1] max-w-xl leading-relaxed">
+              Targeting Band {student.targetBand.toFixed(1)}{" "}
+              <span className="capitalize">{student.testType}</span>. Your personalized daily
+              commitment is {student.dailyMinutes} minutes to ensure consistent score progression.
             </p>
+
+            <div className="flex flex-wrap items-center gap-3 pt-2">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-[#174A48] border border-[#D4E8E3] dark:border-[#205653] text-xs font-semibold text-[#123C3A] dark:text-[#F4FAF8]">
+                <Target className="w-4 h-4 text-[#25A995]" />
+                <span>Target Band: {student.targetBand.toFixed(1)}</span>
+              </div>
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-[#174A48] border border-[#D4E8E3] dark:border-[#205653] text-xs font-semibold text-[#123C3A] dark:text-[#F4FAF8]">
+                <Clock className="w-4 h-4 text-[#25A995]" />
+                <span>
+                  {student.daysRemaining > 0
+                    ? `${student.daysRemaining} days until test`
+                    : "Test date reached"}
+                </span>
+              </div>
+            </div>
           </div>
 
-          {/* Quick Metrics Strip */}
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="bg-[#F4FAF8] dark:bg-[#0A1C1B]/80 border border-[#D4E8E3] dark:border-[#205653] px-4 py-2.5 rounded-2xl text-center">
-              <span className="text-[10px] uppercase font-bold text-[#3D6462] dark:text-[#A0C5C1] block tracking-wider">
-                {language === "bn" ? "টার্গেট ব্যান্ড" : "Target Band"}
-              </span>
-              <span className="text-lg font-extrabold text-[#FF8A65]">
-                {profile.targetBand.toFixed(1)}
-              </span>
+          {/* Continue Learning CTA Pill */}
+          <div className="shrink-0 p-5 rounded-2xl bg-white dark:bg-[#174A48] border border-[#D4E8E3] dark:border-[#205653] shadow-sm max-w-sm w-full md:w-auto">
+            <span className="text-[10px] font-bold text-[#67839A] dark:text-[#A0C5C1] uppercase tracking-wider">
+              Next Priority Action
+            </span>
+            <div className="text-sm font-bold text-[#123C3A] dark:text-[#F4FAF8] mt-1 truncate">
+              {continueLearning.title}
             </div>
-
-            <div className="bg-[#F4FAF8] dark:bg-[#0A1C1B]/80 border border-[#D4E8E3] dark:border-[#205653] px-4 py-2.5 rounded-2xl text-center">
-              <span className="text-[10px] uppercase font-bold text-[#3D6462] dark:text-[#A0C5C1] block tracking-wider">
-                {language === "bn" ? "বর্তমান প্রাক্কলিত" : "Current Est."}
-              </span>
-              <span className="text-lg font-extrabold text-[#25A995]">
-                Band {overallBand.toFixed(1)}
-              </span>
-            </div>
-
-            <div className="bg-[#F4FAF8] dark:bg-[#0A1C1B]/80 border border-[#D4E8E3] dark:border-[#205653] px-4 py-2.5 rounded-2xl text-center">
-              <span className="text-[10px] uppercase font-bold text-[#3D6462] dark:text-[#A0C5C1] block tracking-wider">
-                {language === "bn" ? "পরীক্ষার তারিখ" : "Exam Target"}
-              </span>
-              <span className="text-xs font-bold text-[#123C3A] dark:text-[#F4FAF8]">
-                {profile.targetDate}
-              </span>
-            </div>
-
-            {/* Continue Learning CTA */}
+            <p className="text-xs text-[#3D6462] dark:text-[#A0C5C1] mt-0.5 line-clamp-1">
+              {continueLearning.subtitle}
+            </p>
             <Link
-              href={
-                nextTask?.skill === "reading"
-                  ? "/skills/reading"
-                  : nextTask?.skill === "listening"
-                  ? "/skills/listening"
-                  : nextTask?.skill === "writing"
-                  ? "/skills/writing"
-                  : nextTask?.skill === "speaking"
-                  ? "/skills/speaking"
-                  : "/mock-centre"
-              }
-              className="px-5 py-3 rounded-2xl bg-[#25A995] hover:bg-[#1D8B7A] text-white font-semibold text-xs shadow-md shadow-[#25A995]/25 border border-transparent flex items-center gap-2 transition-all"
+              href={continueLearning.href}
+              className="mt-3 w-full inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-[#25A995] hover:bg-[#123C3A] text-white text-xs font-bold transition-all shadow-xs"
             >
-              <Play className="w-4 h-4 fill-current" />
-              <span>
-                {language === "bn" ? "পড়াশোনা চালিয়ে যান" : "Continue Learning"}
+              <span>{continueLearning.actionLabel}</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ========================================================================= */}
+      {/* B. IELTS 4 Skills Progress Overview Cards */}
+      {/* ========================================================================= */}
+      <section aria-labelledby="skills-heading" className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h3
+            id="skills-heading"
+            className="text-base sm:text-lg font-bold text-[#123C3A] dark:text-[#F4FAF8]"
+          >
+            IELTS Skill Readiness & Practice Scores
+          </h3>
+          <span className="text-xs text-[#67839A] dark:text-[#A0C5C1] font-medium hidden sm:inline">
+            Official IELTS Band Rounding Formula Applied
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Reading */}
+          <div className="p-5 rounded-2xl bg-white dark:bg-[#123C3A] border border-[#D4E8E3] dark:border-[#205653] shadow-xs flex flex-col justify-between space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="w-9 h-9 rounded-xl bg-teal-50 dark:bg-teal-950/40 text-[#25A995] flex items-center justify-center">
+                <BookOpen className="w-5 h-5" />
+              </div>
+              <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-[#F4FAF8] dark:bg-[#174A48] text-[#123C3A] dark:text-[#F4FAF8]">
+                {overview.skills.reading.label}
               </span>
+            </div>
+            <div>
+              <div className="text-sm font-bold text-[#123C3A] dark:text-[#F4FAF8]">Reading</div>
+              <div className="text-xs text-[#67839A] dark:text-[#A0C5C1] mt-0.5">
+                {overview.skills.reading.practiceCount} mock section tests taken
+              </div>
+            </div>
+            <Link
+              href="/skills/reading"
+              className="text-xs font-bold text-[#25A995] hover:underline inline-flex items-center gap-1"
+            >
+              <span>Practice Reading</span>
+              <ArrowRight className="w-3 h-3" />
+            </Link>
+          </div>
+
+          {/* Listening */}
+          <div className="p-5 rounded-2xl bg-white dark:bg-[#123C3A] border border-[#D4E8E3] dark:border-[#205653] shadow-xs flex flex-col justify-between space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="w-9 h-9 rounded-xl bg-sky-50 dark:bg-sky-950/40 text-sky-600 flex items-center justify-center">
+                <Headphones className="w-5 h-5" />
+              </div>
+              <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-[#F4FAF8] dark:bg-[#174A48] text-[#123C3A] dark:text-[#F4FAF8]">
+                {overview.skills.listening.label}
+              </span>
+            </div>
+            <div>
+              <div className="text-sm font-bold text-[#123C3A] dark:text-[#F4FAF8]">Listening</div>
+              <div className="text-xs text-[#67839A] dark:text-[#A0C5C1] mt-0.5">
+                {overview.skills.listening.practiceCount} audio simulations completed
+              </div>
+            </div>
+            <Link
+              href="/skills/listening"
+              className="text-xs font-bold text-sky-600 hover:underline inline-flex items-center gap-1"
+            >
+              <span>Practice Listening</span>
+              <ArrowRight className="w-3 h-3" />
+            </Link>
+          </div>
+
+          {/* Writing */}
+          <div className="p-5 rounded-2xl bg-white dark:bg-[#123C3A] border border-[#D4E8E3] dark:border-[#205653] shadow-xs flex flex-col justify-between space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 flex items-center justify-center">
+                <Edit3 className="w-5 h-5" />
+              </div>
+              <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-[#F4FAF8] dark:bg-[#174A48] text-[#123C3A] dark:text-[#F4FAF8]">
+                {overview.skills.writing.label}
+              </span>
+            </div>
+            <div>
+              <div className="text-sm font-bold text-[#123C3A] dark:text-[#F4FAF8]">Writing</div>
+              <div className="text-xs text-[#67839A] dark:text-[#A0C5C1] mt-0.5">
+                Task 1 & Task 2 Rubric Graded
+              </div>
+            </div>
+            <Link
+              href="/skills/writing"
+              className="text-xs font-bold text-amber-600 hover:underline inline-flex items-center gap-1"
+            >
+              <span>Practice Writing</span>
+              <ArrowRight className="w-3 h-3" />
+            </Link>
+          </div>
+
+          {/* Speaking */}
+          <div className="p-5 rounded-2xl bg-white dark:bg-[#123C3A] border border-[#D4E8E3] dark:border-[#205653] shadow-xs flex flex-col justify-between space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 flex items-center justify-center">
+                <Mic className="w-5 h-5" />
+              </div>
+              <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-[#F4FAF8] dark:bg-[#174A48] text-[#123C3A] dark:text-[#F4FAF8]">
+                {overview.skills.speaking.label}
+              </span>
+            </div>
+            <div>
+              <div className="text-sm font-bold text-[#123C3A] dark:text-[#F4FAF8]">Speaking</div>
+              <div className="text-xs text-[#67839A] dark:text-[#A0C5C1] mt-0.5">
+                Parts 1, 2, 3 Fluency & Coherence
+              </div>
+            </div>
+            <Link
+              href="/skills/speaking"
+              className="text-xs font-bold text-indigo-600 hover:underline inline-flex items-center gap-1"
+            >
+              <span>Practice Speaking</span>
+              <ArrowRight className="w-3 h-3" />
             </Link>
           </div>
         </div>
 
-        {/* Weekly Completion Progress */}
-        <div className="mt-6 pt-5 border-t border-[#D4E8E3] dark:border-[#205653] grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-          <div>
-            <div className="flex justify-between text-[#3D6462] dark:text-[#A0C5C1] mb-1">
-              <span>{language === "bn" ? "সাপ্তাহিক টাস্ক সম্পন্ন" : "Weekly Task Completion"}</span>
-              <span className="text-[#25A995] font-bold">80%</span>
-            </div>
-            <div className="w-full h-2 rounded-full bg-[#D4E8E3] dark:bg-[#0A1C1B] overflow-hidden">
-              <div className="h-full bg-[#25A995] rounded-full w-4/5" />
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 text-[#3D6462] dark:text-[#A0C5C1]">
-            <Calendar className="w-4 h-4 text-[#FF8A65]" />
-            <span>
-              {language === "bn" ? "আসন্ন মক টেস্ট:" : "Upcoming Mock:"}{" "}
-              <strong className="text-[#123C3A] dark:text-[#F4FAF8]">This Sunday, 10:00 AM (UTC+6)</strong>
-            </span>
-          </div>
-
-          <div className="flex items-center gap-2 text-[#3D6462] dark:text-[#A0C5C1]">
-            <Clock className="w-4 h-4 text-[#25A995]" />
-            <span>
-              {language === "bn" ? "দৈনিক লক্ষ্যমাত্রা:" : "Daily Goal:"}{" "}
-              <strong className="text-[#123C3A] dark:text-[#F4FAF8]">{profile.dailyMinutes} min/day</strong>
-            </span>
-          </div>
+        {/* Diagnostic Status Footnote */}
+        <div className="p-3 rounded-xl bg-[#E8F7F4] dark:bg-[#123C3A] border border-[#D4E8E3] dark:border-[#205653] text-[11px] text-[#3D6462] dark:text-[#A0C5C1] flex items-start gap-2">
+          <AlertCircle className="w-4 h-4 text-[#25A995] shrink-0 mt-0.5" />
+          <span>
+            <strong>Score Transparency:</strong> Estimated band scores are calculated using the official IELTS rounding rule (averages ending in .25 round up to .5, ending in .75 round up to next whole band). AI-generated diagnostics serve practice benchmarks and do not constitute official test results.
+          </span>
         </div>
+      </section>
+
+      {/* ========================================================================= */}
+      {/* C & D. Today's Study Plan & Quick Actions (Two-Column Layout) */}
+      {/* ========================================================================= */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
+        {/* Left Column: Today's Study Plan Tasks */}
+        <section
+          aria-labelledby="plan-heading"
+          className="lg:col-span-2 p-6 rounded-3xl bg-white dark:bg-[#123C3A] border border-[#D4E8E3] dark:border-[#205653] shadow-xs space-y-5"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <CalendarCheck className="w-5 h-5 text-[#25A995]" />
+              <h3
+                id="plan-heading"
+                className="text-base sm:text-lg font-bold text-[#123C3A] dark:text-[#F4FAF8]"
+              >
+                Today&apos;s Study Tasks ({todayPlan.day})
+              </h3>
+            </div>
+            <Link
+              href="/study-plan"
+              className="text-xs font-bold text-[#25A995] hover:underline inline-flex items-center gap-1"
+            >
+              <span>View Full Week</span>
+              <ArrowRight className="w-3 h-3" />
+            </Link>
+          </div>
+
+          <div className="space-y-3">
+            {todayPlan.tasks.length === 0 ? (
+              <p className="text-xs text-[#67839A] dark:text-[#A0C5C1] py-4 text-center">
+                All scheduled tasks for today are completed! Great job maintaining consistency.
+              </p>
+            ) : (
+              todayPlan.tasks.map((task) => (
+                <div
+                  key={task.id}
+                  className={`p-4 rounded-2xl border transition-all duration-200 flex items-center justify-between gap-4 ${
+                    task.completed
+                      ? "bg-[#F9FCFB] dark:bg-[#0E2F2D] border-[#D4E8E3] dark:border-[#205653] opacity-75"
+                      : "bg-white dark:bg-[#174A48] border-[#D4E8E3] dark:border-[#205653] hover:border-[#25A995]/50 shadow-2xs"
+                  }`}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <button
+                      onClick={() => handleToggleTask(task.id, task.completed)}
+                      disabled={togglingTaskId === task.id}
+                      className={`w-6 h-6 rounded-lg border flex items-center justify-center transition-colors cursor-pointer ${
+                        task.completed
+                          ? "bg-[#25A995] border-[#25A995] text-white"
+                          : "border-[#C9DDE7] dark:border-[#205653] bg-white dark:bg-[#123C3A] hover:border-[#25A995]"
+                      }`}
+                      aria-label={
+                        task.completed ? "Mark task incomplete" : "Mark task complete"
+                      }
+                    >
+                      {task.completed && <CheckCircle2 className="w-4 h-4 text-white" />}
+                    </button>
+
+                    <div className="min-w-0">
+                      <div
+                        className={`text-xs sm:text-sm font-bold truncate ${
+                          task.completed
+                            ? "line-through text-[#67839A] dark:text-[#A0C5C1]"
+                            : "text-[#123C3A] dark:text-[#F4FAF8]"
+                        }`}
+                      >
+                        {task.title}
+                      </div>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#E8F7F4] dark:bg-[#123C3A] text-[#25A995]">
+                          {task.skill}
+                        </span>
+                        <span className="text-[11px] text-[#67839A] dark:text-[#A0C5C1] flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          {task.durationMinutes} min
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Link
+                    href={`/skills/${task.skill === "mock" ? "reading" : task.skill}`}
+                    className="shrink-0 px-3 py-1.5 rounded-xl bg-white dark:bg-[#123C3A] border border-[#D4E8E3] dark:border-[#205653] text-[11px] font-semibold text-[#123C3A] dark:text-[#F4FAF8] hover:border-[#25A995] transition-colors"
+                  >
+                    Start
+                  </Link>
+                </div>
+              ))
+            )}
+          </div>
+        </section>
+
+        {/* Right Column: Quick Learning Actions & Tool Hub */}
+        <section
+          aria-labelledby="actions-heading"
+          className="p-6 rounded-3xl bg-white dark:bg-[#123C3A] border border-[#D4E8E3] dark:border-[#205653] shadow-xs space-y-4"
+        >
+          <h3
+            id="actions-heading"
+            className="text-base sm:text-lg font-bold text-[#123C3A] dark:text-[#F4FAF8]"
+          >
+            Quick Learning Actions
+          </h3>
+
+          <div className="space-y-2.5">
+            <Link
+              href="/mock-centre"
+              className="flex items-center justify-between p-3.5 rounded-2xl bg-[#F4FAF8] dark:bg-[#174A48] hover:bg-[#E8F7F4] dark:hover:bg-[#174A48]/80 border border-[#D4E8E3] dark:border-[#205653] transition-all group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-white dark:bg-[#123C3A] text-[#25A995] flex items-center justify-center shadow-2xs">
+                  <FileCheck2 className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-[#123C3A] dark:text-[#F4FAF8]">
+                    Take Mock Exam
+                  </div>
+                  <div className="text-[10px] text-[#67839A] dark:text-[#A0C5C1]">
+                    Timed full exam simulation
+                  </div>
+                </div>
+              </div>
+              <ArrowRight className="w-4 h-4 text-[#67839A] group-hover:text-[#25A995] group-hover:translate-x-0.5 transition-transform" />
+            </Link>
+
+            <Link
+              href="/tutor"
+              className="flex items-center justify-between p-3.5 rounded-2xl bg-[#F4FAF8] dark:bg-[#174A48] hover:bg-[#E8F7F4] dark:hover:bg-[#174A48]/80 border border-[#D4E8E3] dark:border-[#205653] transition-all group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-white dark:bg-[#123C3A] text-sky-600 flex items-center justify-center shadow-2xs">
+                  <Bot className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-[#123C3A] dark:text-[#F4FAF8]">
+                    Ask AI Tutor
+                  </div>
+                  <div className="text-[10px] text-[#67839A] dark:text-[#A0C5C1]">
+                    Rubric & criteria assistance
+                  </div>
+                </div>
+              </div>
+              <ArrowRight className="w-4 h-4 text-[#67839A] group-hover:text-[#25A995] group-hover:translate-x-0.5 transition-transform" />
+            </Link>
+
+            <Link
+              href="/vocabulary"
+              className="flex items-center justify-between p-3.5 rounded-2xl bg-[#F4FAF8] dark:bg-[#174A48] hover:bg-[#E8F7F4] dark:hover:bg-[#174A48]/80 border border-[#D4E8E3] dark:border-[#205653] transition-all group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-white dark:bg-[#123C3A] text-amber-600 flex items-center justify-center shadow-2xs">
+                  <SpellCheck className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-[#123C3A] dark:text-[#F4FAF8]">
+                    Review Vocabulary
+                  </div>
+                  <div className="text-[10px] text-[#67839A] dark:text-[#A0C5C1]">
+                    {stats.vocabularySavedCount} words ({stats.vocabularyMasteredCount} mastered)
+                  </div>
+                </div>
+              </div>
+              <ArrowRight className="w-4 h-4 text-[#67839A] group-hover:text-[#25A995] group-hover:translate-x-0.5 transition-transform" />
+            </Link>
+
+            <Link
+              href="/notebook"
+              className="flex items-center justify-between p-3.5 rounded-2xl bg-[#F4FAF8] dark:bg-[#174A48] hover:bg-[#E8F7F4] dark:hover:bg-[#174A48]/80 border border-[#D4E8E3] dark:border-[#205653] transition-all group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-white dark:bg-[#123C3A] text-rose-600 flex items-center justify-center shadow-2xs">
+                  <Bookmark className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-[#123C3A] dark:text-[#F4FAF8]">
+                    Mistake Notebook
+                  </div>
+                  <div className="text-[10px] text-[#67839A] dark:text-[#A0C5C1]">
+                    {stats.unresolvedMistakesCount} unresolved error notes
+                  </div>
+                </div>
+              </div>
+              <ArrowRight className="w-4 h-4 text-[#67839A] group-hover:text-[#25A995] group-hover:translate-x-0.5 transition-transform" />
+            </Link>
+          </div>
+        </section>
       </div>
 
-      {/* 2. Hierarchy Tier 2: Four Skill Cards */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-[#123C3A] dark:text-[#F4FAF8] flex items-center gap-2">
-            <Layers className="w-4 h-4 text-[#25A995]" />
-            <span>{language === "bn" ? "চারটি স্কিল ল্যাব অগ্রগতি" : "Four Skill Labs Progress"}</span>
-          </h2>
-          <span className="text-xs text-[#3D6462] dark:text-[#A0C5C1]">
-            {language === "bn" ? "সর্বশেষ অনুশীলন ও পরবর্তী প্রস্তাবনা" : "Latest scores & recommended actions"}
+      {/* ========================================================================= */}
+      {/* E. Recent Activity & Consistency */}
+      {/* ========================================================================= */}
+      <section
+        aria-labelledby="activity-heading"
+        className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-[#123C3A] border border-[#D4E8E3] dark:border-[#205653] shadow-xs space-y-4"
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <TrendingUp className="w-5 h-5 text-[#25A995]" />
+            <h3
+              id="activity-heading"
+              className="text-base sm:text-lg font-bold text-[#123C3A] dark:text-[#F4FAF8]"
+            >
+              Recent Practice & Learning History
+            </h3>
+          </div>
+          <span className="text-xs font-semibold text-[#67839A] dark:text-[#A0C5C1]">
+            Weekly Consistency: {overview.studyStreakDays} days active
           </span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-          {/* Reading Card */}
-          <div className="bg-white dark:bg-[#123C3A] p-5 rounded-2xl border border-[#D4E8E3] dark:border-[#205653] hover:border-[#25A995] shadow-sm hover:shadow-md transition-all">
-            <div className="flex items-center justify-between mb-3">
-              <div className="p-2 rounded-xl bg-[#E8F7F4] dark:bg-[#25A995]/20 border border-[#25A995]/30 text-[#25A995] shadow-sm">
-                <BookOpen className="w-5 h-5" />
-              </div>
-              <span className="text-xl font-extrabold text-[#25A995]">
-                Band {skillScores.reading.toFixed(1)}
-              </span>
-            </div>
-            <h3 className="text-sm font-bold text-[#123C3A] dark:text-[#F4FAF8] mb-1">
-              {language === "bn" ? "রিডিং ল্যাব" : "Academic Reading"}
-            </h3>
-            <p className="text-[11px] text-[#3D6462] dark:text-[#A0C5C1] mb-4 line-clamp-2">
-              Recent: TFNG passage test. Trend: <span className="text-[#25A995] font-semibold">+0.5 Band</span>.
+        {recentActivities.length === 0 ? (
+          <div className="text-center py-8 space-y-2">
+            <p className="text-sm font-semibold text-[#123C3A] dark:text-[#F4FAF8]">
+              No practice attempts recorded yet
             </p>
-            <div className="pt-3 border-t border-[#D4E8E3] dark:border-[#205653]">
-              <Link
-                href="/skills/reading"
-                className="text-xs text-[#25A995] hover:text-[#1D8B7A] font-semibold flex items-center justify-between"
-              >
-                <span>{language === "bn" ? "প্যাসেজ ২ প্র্যাকটিস" : "Practice Passage 2"}</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
-          </div>
-
-          {/* Listening Card */}
-          <div className="bg-white dark:bg-[#123C3A] p-5 rounded-2xl border border-[#D4E8E3] dark:border-[#205653] hover:border-[#25A995] shadow-sm hover:shadow-md transition-all">
-            <div className="flex items-center justify-between mb-3">
-              <div className="p-2 rounded-xl bg-[#E8F7F4] dark:bg-[#25A995]/20 border border-[#25A995]/30 text-[#25A995] shadow-sm">
-                <Headphones className="w-5 h-5" />
-              </div>
-              <span className="text-xl font-extrabold text-[#25A995]">
-                Band {skillScores.listening.toFixed(1)}
-              </span>
-            </div>
-            <h3 className="text-sm font-bold text-[#123C3A] dark:text-[#F4FAF8] mb-1">
-              {language === "bn" ? "লিসেনিং ল্যাব" : "Computer Listening"}
-            </h3>
-            <p className="text-[11px] text-[#3D6462] dark:text-[#A0C5C1] mb-4 line-clamp-2">
-              Recent: Section 3 Tutorial audio. Trend: <span className="text-[#25A995] font-semibold">Steady</span>.
+            <p className="text-xs text-[#67839A] dark:text-[#A0C5C1]">
+              Complete your first practice test or interactive lesson to start tracking your progress.
             </p>
-            <div className="pt-3 border-t border-[#D4E8E3] dark:border-[#205653]">
-              <Link
-                href="/skills/listening"
-                className="text-xs text-[#25A995] hover:text-[#1D8B7A] font-semibold flex items-center justify-between"
-              >
-                <span>{language === "bn" ? "অডিও প্র্যাকটিস" : "Start Audio Drill"}</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
+            <Link
+              href="/mock-centre"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#25A995] text-white text-xs font-bold mt-2"
+            >
+              <PlayCircle className="w-3.5 h-3.5" />
+              <span>Take Diagnostic Mock</span>
+            </Link>
           </div>
-
-          {/* Writing Card */}
-          <div className="bg-white dark:bg-[#123C3A] p-5 rounded-2xl border border-[#D4E8E3] dark:border-[#205653] hover:border-[#FF8A65] shadow-sm hover:shadow-md transition-all">
-            <div className="flex items-center justify-between mb-3">
-              <div className="p-2 rounded-xl bg-[#FFF6F3] dark:bg-[#FF8A65]/20 border border-[#FF8A65]/30 text-[#FF8A65] shadow-sm">
-                <FileText className="w-5 h-5" />
-              </div>
-              <span className="text-xl font-extrabold text-[#FF8A65]">
-                Band {skillScores.writing.toFixed(1)}
-              </span>
-            </div>
-            <h3 className="text-sm font-bold text-[#123C3A] dark:text-[#F4FAF8] mb-1">
-              {language === "bn" ? "রাইটিং ল্যাব" : "Writing Tasks 1 & 2"}
-            </h3>
-            <p className="text-[11px] text-[#3D6462] dark:text-[#A0C5C1] mb-4 line-clamp-2">
-              Recent: Task 2 University Essay. Weakness: <span className="text-[#FF8A65] font-semibold">CC & Lexical</span>.
-            </p>
-            <div className="pt-3 border-t border-[#D4E8E3] dark:border-[#205653]">
-              <Link
-                href="/skills/writing"
-                className="text-xs text-[#FF8A65] hover:text-[#E87652] font-semibold flex items-center justify-between"
-              >
-                <span>{language === "bn" ? "রচনা ও AI ফিডব্যাক" : "Write Task 2 Essay"}</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
-          </div>
-
-          {/* Speaking Card */}
-          <div className="bg-white dark:bg-[#123C3A] p-5 rounded-2xl border border-[#D4E8E3] dark:border-[#205653] hover:border-[#25A995] shadow-sm hover:shadow-md transition-all">
-            <div className="flex items-center justify-between mb-3">
-              <div className="p-2 rounded-xl bg-[#E8F7F4] dark:bg-[#25A995]/20 border border-[#25A995]/30 text-[#25A995] shadow-sm">
-                <Mic className="w-5 h-5" />
-              </div>
-              <span className="text-xl font-extrabold text-[#25A995]">
-                Band {skillScores.speaking.toFixed(1)}
-              </span>
-            </div>
-            <h3 className="text-sm font-bold text-[#123C3A] dark:text-[#F4FAF8] mb-1">
-              {language === "bn" ? "স্পিকিং ল্যাব" : "Speaking Cue Card"}
-            </h3>
-            <p className="text-[11px] text-[#3D6462] dark:text-[#A0C5C1] mb-4 line-clamp-2">
-              Recent: Environmental Initiative cue card. Trend: <span className="text-[#25A995] font-semibold">+0.5 Band</span>.
-            </p>
-            <div className="pt-3 border-t border-[#D4E8E3] dark:border-[#205653]">
-              <Link
-                href="/skills/speaking"
-                className="text-xs text-[#25A995] hover:text-[#1D8B7A] font-semibold flex items-center justify-between"
-              >
-                <span>{language === "bn" ? "রেকর্ডিং সিমুলেশন" : "Record Cue Card"}</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* 3. Hierarchy Tier 3: Frequent Mistakes, Vocabulary Schedule & AI Feedback Queue */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Mistakes Box */}
-        <div className="bg-white dark:bg-[#123C3A] p-6 rounded-2xl border border-[#D4E8E3] dark:border-[#205653] shadow-sm space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 text-[#FF8A65]" />
-              <h3 className="text-sm font-bold text-[#123C3A] dark:text-[#F4FAF8]">
-                {language === "bn" ? "ভুলের পর্যালোচনা (Mistakes)" : "Repeat Error Alerts"}
-              </h3>
-            </div>
-            <span className="text-xs bg-[#FFF6F3] text-[#FF8A65] border border-[#FF8A65]/30 dark:bg-[#FF8A65]/20 dark:text-[#FF8A65] px-2 py-0.5 rounded-full font-semibold">
-              {unresolvedMistakes.length} unresolved
-            </span>
-          </div>
-
-          <div className="space-y-3">
-            {unresolvedMistakes.slice(0, 2).map((m) => (
-              <div key={m.id} className="bg-[#F4FAF8] dark:bg-[#0A1C1B]/80 border border-[#D4E8E3] dark:border-[#205653] p-3 rounded-xl space-y-1">
-                <div className="flex justify-between items-center text-[10px]">
-                  <span className="text-[#25A995] uppercase font-semibold">{m.skill} • {m.questionType}</span>
-                  <span className="text-[#FF8A65] font-bold bg-[#FFF6F3] dark:bg-[#FF8A65]/20 px-1.5 py-0.5 rounded border border-[#FF8A65]/30">{m.errorTag}</span>
+        ) : (
+          <div className="divide-y divide-[#D4E8E3] dark:divide-[#205653]">
+            {recentActivities.map((act) => (
+              <div key={act.id} className="py-3 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-[#E8F7F4] dark:bg-[#174A48] text-[#25A995] flex items-center justify-center shrink-0">
+                    {act.type === "exam" ? (
+                      <Award className="w-4 h-4" />
+                    ) : act.type === "mistake" ? (
+                      <Bookmark className="w-4 h-4 text-rose-500" />
+                    ) : (
+                      <BookOpen className="w-4 h-4" />
+                    )}
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-[#123C3A] dark:text-[#F4FAF8]">
+                      {act.title}
+                    </div>
+                    <div className="text-[11px] text-[#67839A] dark:text-[#A0C5C1]">
+                      {act.detail}
+                    </div>
+                  </div>
                 </div>
-                <p className="text-xs text-[#123C3A] dark:text-[#F4FAF8] line-clamp-1">{m.questionPrompt}</p>
-                <p className="text-[11px] text-[#3D6462] dark:text-[#A0C5C1]">{m.reasoning}</p>
+                <div className="text-[10px] text-[#8AA4B7] shrink-0">
+                  {new Date(act.timestamp).toLocaleDateString(undefined, {
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </div>
               </div>
             ))}
           </div>
-
-          <Link
-            href="/notebook"
-            className="block text-center text-xs text-[#FF8A65] hover:text-[#E87652] font-semibold pt-2 border-t border-[#D4E8E3] dark:border-[#205653]"
-          >
-            {language === "bn" ? "সম্পূর্ণ ভুলের নোটবুক দেখুন" : "View Complete Mistake Notebook"} →
-          </Link>
-        </div>
-
-        {/* Vocabulary Spaced Repetition Box */}
-        <div className="bg-white dark:bg-[#123C3A] p-6 rounded-2xl border border-[#D4E8E3] dark:border-[#205653] shadow-sm space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Bookmark className="w-4 h-4 text-[#25A995]" />
-              <h3 className="text-sm font-bold text-[#123C3A] dark:text-[#F4FAF8]">
-                {language === "bn" ? "আজকের শব্দভাণ্ডার (Vocabulary)" : "Spaced Repetition Cards"}
-              </h3>
-            </div>
-            <span className="text-xs text-[#3D6462] dark:text-[#A0C5C1]">
-              {vocabulary.length} tracked
-            </span>
-          </div>
-
-          <div className="space-y-3">
-            {vocabulary.slice(0, 2).map((v) => (
-              <div key={v.id} className="bg-[#F4FAF8] dark:bg-[#0A1C1B]/80 border border-[#D4E8E3] dark:border-[#205653] p-3 rounded-xl space-y-1">
-                <div className="flex justify-between items-center text-xs">
-                  <span className="font-bold text-[#123C3A] dark:text-[#F4FAF8]">{v.word}</span>
-                  <span className="text-[10px] text-[#25A995] font-semibold px-2 py-0.5 rounded bg-[#E8F7F4] dark:bg-[#25A995]/20 border border-[#25A995]/30">
-                    {v.bandLevel}
-                  </span>
-                </div>
-                <p className="text-[11px] text-[#3D6462] dark:text-[#A0C5C1]">{v.meaning}</p>
-                <p className="text-[10px] text-[#3D6462] dark:text-[#A0C5C1] italic">"{v.collocation}"</p>
-              </div>
-            ))}
-          </div>
-
-          <Link
-            href="/vocabulary"
-            className="block text-center text-xs text-[#25A995] hover:text-[#1D8B7A] font-semibold pt-2 border-t border-[#D4E8E3] dark:border-[#205653]"
-          >
-            {language === "bn" ? "শব্দভাণ্ডার ফ্ল্যাশকার্ড অনুশীলন" : "Review All Flashcards"} →
-          </Link>
-        </div>
-
-        {/* AI Tutor & Feedback Box */}
-        <div className="bg-white dark:bg-[#123C3A] p-6 rounded-2xl border border-[#D4E8E3] dark:border-[#205653] shadow-sm space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <BrainCircuit className="w-4 h-4 text-[#25A995]" />
-              <h3 className="text-sm font-bold text-[#123C3A] dark:text-[#F4FAF8]">
-                {language === "bn" ? "AI গৃহশিক্ষক ও সহায়তা" : "Grounded AI Tutor"}
-              </h3>
-            </div>
-            <span className="text-[11px] text-[#25A995] flex items-center gap-1 font-medium">
-              <span className="w-2 h-2 rounded-full bg-[#25A995] animate-pulse" />
-              Active
-            </span>
-          </div>
-
-          <div className="bg-[#F4FAF8] dark:bg-[#0A1C1B]/80 border border-[#D4E8E3] dark:border-[#205653] p-4 rounded-xl text-xs space-y-2">
-            <p className="text-[#3D6462] dark:text-[#A0C5C1]">
-              {language === "bn"
-                ? "সিলেবাস, রুব্রিক বা কোনো প্রশ্ন বুঝতে না পারলে অফিসিয়াল রেফারেন্স সহ ব্যাখ্যা চান।"
-                : "Ask any question regarding official marking rubrics, task formats, or essay improvement."}
-            </p>
-            <div className="text-[11px] text-[#25A995] font-semibold">
-              Daily quota: 25 / 25 remaining
-            </div>
-          </div>
-
-          <Link
-            href="/tutor"
-            className="block text-center py-2 px-3 rounded-xl bg-[#25A995] hover:bg-[#1D8B7A] text-white text-xs font-semibold shadow-md shadow-[#25A995]/20 transition-all"
-          >
-            {language === "bn" ? "টিউটরের সাথে কথা বলুন" : "Chat with AI Tutor"}
-          </Link>
-        </div>
-      </div>
-
-      {/* 4. Hierarchy Tier 4: Recent Attempts Table & Official Test-Day Reference */}
-      <div className="bg-white dark:bg-[#123C3A] rounded-2xl border border-[#D4E8E3] dark:border-[#205653] overflow-hidden shadow-sm">
-        <div className="p-6 border-b border-[#D4E8E3] dark:border-[#205653] flex items-center justify-between">
-          <div>
-            <h3 className="text-base font-bold text-[#123C3A] dark:text-[#F4FAF8]">
-              {language === "bn" ? "সাম্প্রতিক মক টেস্ট ও স্কোর হিস্ট্রি" : "Recent Mock Exam Records"}
-            </h3>
-            <p className="text-xs text-[#3D6462] dark:text-[#A0C5C1]">
-              {language === "bn"
-                ? "অফিসিয়াল রাউন্ডিং হিসাবযুক্ত প্র্যাকটিস রেজাল্ট"
-                : "Officially rounded mock scores (Practice estimates only)"}
-            </p>
-          </div>
-
-          <Link
-            href="/mock-centre"
-            className="px-3.5 py-1.5 rounded-xl bg-[#E8F7F4] text-[#25A995] border border-[#25A995]/30 hover:bg-[#D4E8E3]/50 dark:bg-[#25A995]/20 dark:text-[#25A995] text-xs font-medium transition-all"
-          >
-            {language === "bn" ? "নতুন মক শুরু করুন" : "Take New Mock"}
-          </Link>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-[#3D6462] dark:text-[#A0C5C1]">
-            <thead className="bg-[#F4FAF8] dark:bg-[#0A1C1B] text-[#3D6462] dark:text-[#A0C5C1] uppercase text-[10px] tracking-wider border-b border-[#D4E8E3] dark:border-[#205653]">
-              <tr>
-                <th className="py-3 px-6">Mock Title</th>
-                <th className="py-3 px-6">Date</th>
-                <th className="py-3 px-6">Listening</th>
-                <th className="py-3 px-6">Reading</th>
-                <th className="py-3 px-6">Writing</th>
-                <th className="py-3 px-6">Speaking</th>
-                <th className="py-3 px-6">Overall Band</th>
-                <th className="py-3 px-6">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#D4E8E3] dark:divide-[#205653]/60">
-              <tr className="hover:bg-[#F4FAF8] dark:hover:bg-[#0A1C1B]/40 transition-colors">
-                <td className="py-4 px-6 font-medium text-[#123C3A] dark:text-[#F4FAF8]">
-                  BandBloom Academic Diagnostic Mock 1
-                </td>
-                <td className="py-4 px-6 text-[#3D6462] dark:text-[#A0C5C1]">2026-10-18</td>
-                <td className="py-4 px-6 text-[#25A995] font-semibold">7.0</td>
-                <td className="py-4 px-6 text-[#25A995] font-semibold">7.5</td>
-                <td className="py-4 px-6 text-[#FF8A65] font-semibold">6.5</td>
-                <td className="py-4 px-6 text-[#25A995] font-semibold">7.0</td>
-                <td className="py-4 px-6 font-bold text-[#123C3A] dark:text-[#F4FAF8]">
-                  <span className="px-2 py-1 rounded bg-[#E8F7F4] text-[#25A995] border border-[#25A995]/30 dark:bg-[#25A995]/20 dark:text-[#25A995]">
-                    Band 7.0
-                  </span>
-                </td>
-                <td className="py-4 px-6">
-                  <Link
-                    href="/results/mock-1"
-                    className="text-[#25A995] hover:text-[#1D8B7A] font-medium"
-                  >
-                    View Report →
-                  </Link>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <ScoreCalculatorModal isOpen={calcOpen} onClose={() => setCalcOpen(false)} />
+        )}
+      </section>
     </div>
   );
 }

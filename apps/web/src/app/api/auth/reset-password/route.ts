@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { query, withTransaction } from "@/server/db";
-import { hashPassword, hashToken, invalidateAllUserSessions } from "@/server/auth/session";
+import { hashPassword, hashToken } from "@/server/auth/session";
 
 export async function POST(request: Request) {
   try {

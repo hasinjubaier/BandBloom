@@ -16,11 +16,16 @@ export async function GET(request: Request) {
       authenticated: true,
       user,
     });
-  } catch (error) {
-    console.error("Session check error:", error);
+  } catch (error: unknown) {
+    const err = error as { status?: number; message?: string };
+    const status = err.status || 500;
     return NextResponse.json(
-      { success: false, authenticated: false, error: "Internal server error" },
-      { status: 500 }
+      {
+        success: false,
+        authenticated: false,
+        error: status === 503 ? (err.message || "Database service unavailable") : "Internal server error",
+      },
+      { status }
     );
   }
 }

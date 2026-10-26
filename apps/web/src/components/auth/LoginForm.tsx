@@ -77,7 +77,7 @@ export function LoginForm() {
         return;
       }
 
-      setSuccessMessage(data.message || "Sign in successful! Redirecting to your dashboard...");
+      setSuccessMessage(data.message || "Sign in successful! Redirecting...");
       if (rememberMe && typeof window !== "undefined") {
         localStorage.setItem("bandbloom_remember_email", email.trim());
       }

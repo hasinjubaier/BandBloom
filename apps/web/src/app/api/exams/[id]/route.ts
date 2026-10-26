@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getExamDetail, getExamQuestionsForStudent } from "@/server/services/exam.service";
+import { getExamById } from "@/server/services/mock.service";
 
 export async function GET(
   request: Request,
@@ -7,26 +7,23 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const exam = await getExamDetail(id);
+    const exam = await getExamById(id);
 
     if (!exam) {
       return NextResponse.json(
-        { success: false, error: "Exam not found or inactive." },
+        { success: false, error: "Exam not found." },
         { status: 404 }
       );
     }
 
-    const questions = await getExamQuestionsForStudent(id);
-
     return NextResponse.json({
       success: true,
       exam,
-      questions,
     });
-  } catch (error: any) {
-    console.error("Get exam detail error:", error);
+  } catch (error: unknown) {
+    const err = error as { message?: string };
     return NextResponse.json(
-      { success: false, error: "Failed to retrieve exam configuration." },
+      { success: false, error: err.message || "Failed to load exam details." },
       { status: 500 }
     );
   }

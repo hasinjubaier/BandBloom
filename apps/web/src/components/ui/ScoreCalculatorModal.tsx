@@ -8,19 +8,31 @@ import { useLanguage } from "@/context/LanguageContext";
 export interface ScoreCalculatorModalProps {
   isOpen: boolean;
   onClose: () => void;
+  initialBand?: number | null;
+  onTargetBandChange?: (band: number) => void;
 }
 
-export const ScoreCalculatorModal: React.FC<ScoreCalculatorModalProps> = ({ isOpen, onClose }) => {
+const CalculatorContent: React.FC<Omit<ScoreCalculatorModalProps, "isOpen">> = ({
+  onClose,
+  initialBand,
+  onTargetBandChange,
+}) => {
   const { language } = useLanguage();
-  const { updateProfile } = useExam();
+  const { profile, updateProfile } = useExam();
 
-  const [listening, setListening] = useState<number>(7.0);
-  const [reading, setReading] = useState<number>(7.5);
-  const [writing, setWriting] = useState<number>(6.5);
-  const [speaking, setSpeaking] = useState<number>(7.0);
+  const getInitialValue = (fallback: number): number => {
+    const activeGoal = initialBand ?? profile?.targetBand;
+    if (typeof activeGoal === "number" && activeGoal >= 4.0 && activeGoal <= 9.0) {
+      return activeGoal;
+    }
+    return fallback;
+  };
+
+  const [listening, setListening] = useState<number>(() => getInitialValue(7.0));
+  const [reading, setReading] = useState<number>(() => getInitialValue(7.5));
+  const [writing, setWriting] = useState<number>(() => getInitialValue(6.5));
+  const [speaking, setSpeaking] = useState<number>(() => getInitialValue(7.0));
   const [savedNotice, setSavedNotice] = useState(false);
-
-  if (!isOpen) return null;
 
   const rawAverage = (listening + reading + writing + speaking) / 4.0;
   const overallBand = roundIELTSBand(rawAverage);
@@ -30,6 +42,12 @@ export const ScoreCalculatorModal: React.FC<ScoreCalculatorModalProps> = ({ isOp
     if (typeof window !== "undefined") {
       localStorage.setItem("bandbloom_target_band", String(overallBand));
       localStorage.setItem("bandbloom_has_chosen_goal", "true");
+      window.dispatchEvent(
+        new CustomEvent("bandbloom:target_band_changed", { detail: { band: overallBand } })
+      );
+    }
+    if (onTargetBandChange) {
+      onTargetBandChange(overallBand);
     }
     setSavedNotice(true);
     setTimeout(() => {
@@ -67,6 +85,42 @@ export const ScoreCalculatorModal: React.FC<ScoreCalculatorModalProps> = ({ isOp
                 ? "অফিসিয়াল রাউন্ডিং নিয়ম (Section 5.3) অনুযায়ী হিসাবকৃত"
                 : "Computed using official test rounding rules (Section 5.3)"}
             </p>
+          </div>
+        </div>
+
+        {/* Quick Goal Presets */}
+        <div className="mb-4 bg-[#F4FAF8] dark:bg-[#0A1C1B]/60 p-2.5 rounded-xl border border-[#D4E8E3] dark:border-[#205653] flex items-center justify-between gap-2 flex-wrap">
+          <span className="text-xs text-[#3D6462] dark:text-[#A0C5C1] font-medium">
+            {language === "bn" ? "টার্গেট ব্যান্ড প্রিসেট:" : "Target Band Preset:"}
+          </span>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {[6.5, 7.0, 7.5, 8.0, 8.5, 9.0].map((preset) => {
+              const isCurrentPreset =
+                listening === preset &&
+                reading === preset &&
+                writing === preset &&
+                speaking === preset;
+              return (
+                <button
+                  key={preset}
+                  type="button"
+                  onClick={() => {
+                    setListening(preset);
+                    setReading(preset);
+                    setWriting(preset);
+                    setSpeaking(preset);
+                  }}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    isCurrentPreset
+                      ? "bg-[#25A995] text-white shadow-xs"
+                      : "bg-white dark:bg-[#123C3A] text-[#3D6462] dark:text-[#A0C5C1] border border-[#D4E8E3] dark:border-[#205653] hover:text-[#123C3A] dark:hover:text-white hover:border-[#25A995]"
+                  }`}
+                  aria-label={`Set all skills to Band ${preset.toFixed(1)}`}
+                >
+                  Band {preset.toFixed(1)}
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -141,4 +195,9 @@ export const ScoreCalculatorModal: React.FC<ScoreCalculatorModalProps> = ({ isOp
       </div>
     </div>
   );
+};
+
+export const ScoreCalculatorModal: React.FC<ScoreCalculatorModalProps> = (props) => {
+  if (!props.isOpen) return null;
+  return <CalculatorContent {...props} />;
 };
