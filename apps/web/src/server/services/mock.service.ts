@@ -423,8 +423,9 @@ export async function getStudentAttempts(userId: string): Promise<ExamAttemptSum
       writingScore: r.writing_score !== null ? Number(r.writing_score) : null,
       speakingScore: r.speaking_score !== null ? Number(r.speaking_score) : null,
     }));
-  } catch {
-    return [];
+  } catch (error) {
+    console.error("[Mock Service]: Failed to fetch student attempts:", error);
+    throw error;
   }
 }
 

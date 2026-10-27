@@ -10,9 +10,11 @@ export interface VocabularyWord {
   exampleSentence: string | null;
   mastery: "learning" | "reviewing" | "mastered";
   intervalDays: number;
+  lastReviewedAt?: string | null;
+  createdAt?: string;
 }
 
-const SEED_VOCABULARY: VocabularyWord[] = [
+export const DEV_FIXTURE_VOCABULARY: VocabularyWord[] = [
   {
     id: "vocab-1",
     word: "Exacerbate",
@@ -87,54 +89,136 @@ const SEED_VOCABULARY: VocabularyWord[] = [
   },
 ];
 
-export async function getStudentVocabulary(
+export interface StudentVocabularyStats {
+  totalSaved: number;
+  learningCount: number;
+  reviewingCount: number;
+  masteredCount: number;
+  catalogAvailableCount: number;
+}
+
+export async function getStudentVocabularyStats(userId: string): Promise<StudentVocabularyStats> {
+  const statsRes = await query<{
+    total_saved: number;
+    learning_count: number;
+    reviewing_count: number;
+    mastered_count: number;
+  }>(
+    `SELECT 
+       COUNT(*)::int AS total_saved,
+       COUNT(*) FILTER (WHERE mastery = 'learning')::int AS learning_count,
+       COUNT(*) FILTER (WHERE mastery = 'reviewing')::int AS reviewing_count,
+       COUNT(*) FILTER (WHERE mastery = 'mastered')::int AS mastered_count
+     FROM user_vocabulary_progress
+     WHERE user_id = $1`,
+    [userId]
+  );
+
+  const catalogRes = await query<{ catalog_count: number }>(
+    `SELECT COUNT(*)::int AS catalog_count FROM vocabulary_items`
+  );
+
+  const row = statsRes.rows[0];
+  return {
+    totalSaved: Number(row?.total_saved || 0),
+    learningCount: Number(row?.learning_count || 0),
+    reviewingCount: Number(row?.reviewing_count || 0),
+    masteredCount: Number(row?.mastered_count || 0),
+    catalogAvailableCount: Number(catalogRes.rows[0]?.catalog_count || 0),
+  };
+}
+
+export async function getStudentSavedVocabulary(
   userId: string,
   filter?: { mastery?: string; bandLevel?: string; query?: string }
 ): Promise<VocabularyWord[]> {
-  try {
-    let sql = `
-      SELECT 
-        v.id,
-        v.word,
-        v.part_of_speech AS "partOfSpeech",
-        v.band_level AS "bandLevel",
-        v.meaning,
-        v.collocation,
-        v.example_sentence AS "exampleSentence",
-        COALESCE(p.mastery, 'learning') AS mastery,
-        COALESCE(p.interval_days, 1) AS "intervalDays"
-      FROM vocabulary_items v
-      LEFT JOIN user_vocabulary_progress p 
-        ON v.id = p.vocabulary_item_id AND p.user_id = $1
-      WHERE 1=1
-    `;
-    const params: unknown[] = [userId];
-    let paramIndex = 2;
+  let sql = `
+    SELECT 
+      v.id,
+      v.word,
+      v.part_of_speech AS "partOfSpeech",
+      v.band_level AS "bandLevel",
+      v.meaning,
+      v.collocation,
+      v.example_sentence AS "exampleSentence",
+      p.mastery,
+      p.interval_days AS "intervalDays",
+      p.last_reviewed_at::text AS "lastReviewedAt",
+      p.created_at::text AS "createdAt"
+    FROM user_vocabulary_progress p
+    JOIN vocabulary_items v ON v.id = p.vocabulary_item_id
+    WHERE p.user_id = $1
+  `;
+  const params: unknown[] = [userId];
+  let paramIndex = 2;
 
-    if (filter?.mastery) {
-      sql += ` AND COALESCE(p.mastery, 'learning') = $${paramIndex++}`;
-      params.push(filter.mastery);
-    }
-    if (filter?.bandLevel) {
-      sql += ` AND v.band_level = $${paramIndex++}`;
-      params.push(filter.bandLevel);
-    }
-    if (filter?.query) {
-      sql += ` AND (v.word ILIKE $${paramIndex} OR v.meaning ILIKE $${paramIndex} OR v.collocation ILIKE $${paramIndex})`;
-      params.push(`%${filter.query}%`);
-      paramIndex++;
-    }
-
-    sql += ` ORDER BY v.created_at ASC`;
-
-    const res = await query<VocabularyWord>(sql, params);
-    if (res.rows.length > 0) {
-      return res.rows;
-    }
-    return SEED_VOCABULARY;
-  } catch {
-    return SEED_VOCABULARY;
+  if (filter?.mastery) {
+    sql += ` AND p.mastery = $${paramIndex++}`;
+    params.push(filter.mastery);
   }
+  if (filter?.bandLevel) {
+    sql += ` AND v.band_level = $${paramIndex++}`;
+    params.push(filter.bandLevel);
+  }
+  if (filter?.query) {
+    sql += ` AND (v.word ILIKE $${paramIndex} OR v.meaning ILIKE $${paramIndex} OR v.collocation ILIKE $${paramIndex})`;
+    params.push(`%${filter.query}%`);
+    paramIndex++;
+  }
+
+  sql += ` ORDER BY p.last_reviewed_at DESC NULLS LAST, p.created_at DESC`;
+
+  const res = await query<VocabularyWord>(sql, params);
+  return res.rows;
+}
+
+export async function getStudentVocabulary(
+  userId: string,
+  filter?: { mastery?: string; bandLevel?: string; query?: string; savedOnly?: boolean }
+): Promise<VocabularyWord[]> {
+  if (filter?.savedOnly) {
+    return getStudentSavedVocabulary(userId, filter);
+  }
+
+  let sql = `
+    SELECT 
+      v.id,
+      v.word,
+      v.part_of_speech AS "partOfSpeech",
+      v.band_level AS "bandLevel",
+      v.meaning,
+      v.collocation,
+      v.example_sentence AS "exampleSentence",
+      COALESCE(p.mastery, 'learning') AS mastery,
+      COALESCE(p.interval_days, 1) AS "intervalDays",
+      p.last_reviewed_at::text AS "lastReviewedAt",
+      p.created_at::text AS "createdAt"
+    FROM vocabulary_items v
+    LEFT JOIN user_vocabulary_progress p 
+      ON v.id = p.vocabulary_item_id AND p.user_id = $1
+    WHERE 1=1
+  `;
+  const params: unknown[] = [userId];
+  let paramIndex = 2;
+
+  if (filter?.mastery) {
+    sql += ` AND COALESCE(p.mastery, 'learning') = $${paramIndex++}`;
+    params.push(filter.mastery);
+  }
+  if (filter?.bandLevel) {
+    sql += ` AND v.band_level = $${paramIndex++}`;
+    params.push(filter.bandLevel);
+  }
+  if (filter?.query) {
+    sql += ` AND (v.word ILIKE $${paramIndex} OR v.meaning ILIKE $${paramIndex} OR v.collocation ILIKE $${paramIndex})`;
+    params.push(`%${filter.query}%`);
+    paramIndex++;
+  }
+
+  sql += ` ORDER BY v.created_at ASC`;
+
+  const res = await query<VocabularyWord>(sql, params);
+  return res.rows;
 }
 
 export async function toggleVocabularyMastery(
@@ -148,30 +232,25 @@ export async function toggleVocabularyMastery(
     mastered: { next: "learning", interval: 1 },
   };
 
-  try {
-    const existing = await query<{ mastery: string }>(
-      `SELECT mastery FROM user_vocabulary_progress 
-       WHERE user_id = $1 AND vocabulary_item_id = $2`,
-      [userId, vocabId]
-    );
+  const existing = await query<{ mastery: string }>(
+    `SELECT mastery FROM user_vocabulary_progress 
+     WHERE user_id = $1 AND vocabulary_item_id = $2`,
+    [userId, vocabId]
+  );
 
-    const currentMastery = existing.rows[0]?.mastery || "learning";
-    const target = newMastery || nextMasteryOrder[currentMastery].next;
-    const interval = target === "mastered" ? 7 : target === "reviewing" ? 3 : 1;
+  const currentMastery = existing.rows[0]?.mastery || "learning";
+  const target = newMastery || nextMasteryOrder[currentMastery].next;
+  const interval = target === "mastered" ? 7 : target === "reviewing" ? 3 : 1;
 
-    await query(
-      `INSERT INTO user_vocabulary_progress (user_id, vocabulary_item_id, mastery, interval_days, last_reviewed_at)
-       VALUES ($1, $2, $3, $4, clock_timestamp())
-       ON CONFLICT (user_id, vocabulary_item_id)
-       DO UPDATE SET mastery = EXCLUDED.mastery, interval_days = EXCLUDED.interval_days, last_reviewed_at = clock_timestamp()`,
-      [userId, vocabId, target, interval]
-    );
+  await query(
+    `INSERT INTO user_vocabulary_progress (user_id, vocabulary_item_id, mastery, interval_days, last_reviewed_at)
+     VALUES ($1, $2, $3, $4, clock_timestamp())
+     ON CONFLICT (user_id, vocabulary_item_id)
+     DO UPDATE SET mastery = EXCLUDED.mastery, interval_days = EXCLUDED.interval_days, last_reviewed_at = clock_timestamp()`,
+    [userId, vocabId, target, interval]
+  );
 
-    return { mastery: target, intervalDays: interval };
-  } catch (error) {
-    console.warn("[Vocabulary Service]: DB toggle fallback:", error);
-    return { mastery: newMastery || "reviewing", intervalDays: 3 };
-  }
+  return { mastery: target, intervalDays: interval };
 }
 
 export async function addCustomVocabulary(

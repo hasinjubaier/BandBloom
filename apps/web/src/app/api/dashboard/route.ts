@@ -13,11 +13,14 @@ export async function GET(request: Request) {
     });
   } catch (error: unknown) {
     const err = error as { status?: number; message?: string };
-    const status = err.status || 401;
+    // Distinguish 401 Unauthorized (from requireAuth) from 500 Internal Server Errors
+    const status = err.status || 500;
+    console.error("[Dashboard API Error]:", error);
+
     return NextResponse.json(
       {
         success: false,
-        error: err.message || "Failed to load student dashboard summary.",
+        error: status === 401 ? "Unauthorized access." : "Unable to load student dashboard summary.",
       },
       { status }
     );

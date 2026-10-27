@@ -16,9 +16,10 @@ export async function GET(request: Request) {
     });
   } catch (error: unknown) {
     const err = error as { status?: number; message?: string };
+    const status = err.status || 500;
     return NextResponse.json(
       { success: false, error: err.message || "Failed to load study plan." },
-      { status: err.status || 401 }
+      { status }
     );
   }
 }
@@ -26,17 +27,40 @@ export async function GET(request: Request) {
 export async function PATCH(request: Request) {
   try {
     const user = await requireAuth(request);
-    const body = await request.json();
-    const { taskId, completed } = body;
-
-    if (!taskId) {
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
       return NextResponse.json(
-        { success: false, error: "Task ID is required." },
+        { success: false, error: "Invalid JSON request payload." },
         { status: 400 }
       );
     }
 
-    const updatedPlan = await toggleTaskCompletion(user.id, taskId, completed);
+    if (!body || typeof body !== "object") {
+      return NextResponse.json(
+        { success: false, error: "Request payload must be a JSON object." },
+        { status: 400 }
+      );
+    }
+
+    const { taskId, completed } = body as { taskId?: unknown; completed?: unknown };
+
+    if (!taskId || typeof taskId !== "string" || !taskId.trim()) {
+      return NextResponse.json(
+        { success: false, error: "Task ID is required and must be a non-empty string." },
+        { status: 400 }
+      );
+    }
+
+    if (completed !== undefined && typeof completed !== "boolean") {
+      return NextResponse.json(
+        { success: false, error: "Task completion status must be a boolean." },
+        { status: 400 }
+      );
+    }
+
+    const updatedPlan = await toggleTaskCompletion(user.id, taskId.trim(), completed);
 
     return NextResponse.json({
       success: true,
@@ -45,9 +69,12 @@ export async function PATCH(request: Request) {
     });
   } catch (error: unknown) {
     const err = error as { status?: number; message?: string };
+    const isClientError = err.message?.includes("not found") || err.message?.includes("Invalid");
+    const status = err.status || (isClientError ? 400 : 500);
+
     return NextResponse.json(
       { success: false, error: err.message || "Failed to update study task." },
-      { status: err.status || 500 }
+      { status }
     );
   }
 }

@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
 import { ScoreCalculatorModal } from "@/components/ui/ScoreCalculatorModal";
+import { formatTestType } from "@/lib/dashboard-utils";
 
 interface PortalShellProps {
   children: React.ReactNode;
@@ -322,8 +323,8 @@ export function PortalShell({ children }: PortalShellProps) {
                   <div className="text-[11px] font-bold text-[#123C3A] dark:text-[#F4FAF8]">
                     Target Band
                   </div>
-                  <div className="text-[10px] text-[#67839A] dark:text-[#A0C5C1] capitalize">
-                    {student.testType}
+                  <div className="text-xs text-[#3D6462] dark:text-[#A0C5C1]">
+                    {formatTestType(student.testType)}
                   </div>
                 </div>
               </div>
@@ -451,7 +452,7 @@ export function PortalShell({ children }: PortalShellProps) {
               {/* Target Band Pill */}
               <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#E8F7F4] dark:bg-[#174A48] border border-[#25A995]/30 text-xs font-bold text-[#123C3A] dark:text-[#F4FAF8]">
                 <Target className="w-3.5 h-3.5 text-[#25A995]" />
-                <span>Band {student.targetBand.toFixed(1)}</span>
+                <span>Target {student.targetBand.toFixed(1)}</span>
               </div>
 
               {/* Band Calculator trigger */}
@@ -484,6 +485,7 @@ export function PortalShell({ children }: PortalShellProps) {
                   onClick={() => setUserDropdownOpen(!userDropdownOpen)}
                   className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-[#F4FAF8] dark:hover:bg-[#174A48] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995]"
                   aria-expanded={userDropdownOpen}
+                  aria-label="User profile menu"
                 >
                   <div className="w-8 h-8 rounded-full bg-[#25A995] text-white flex items-center justify-center font-bold text-xs uppercase shadow-2xs">
                     {student.fullName ? student.fullName.charAt(0) : "L"}

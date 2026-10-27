@@ -1,11 +1,9 @@
 import { HeroSection } from "@/components/landing/HeroSection";
-import { InteractiveGlobeSection } from "@/components/landing/InteractiveGlobeSection";
-import { SkillLabsSection } from "@/components/landing/SkillLabsSection";
 import { HowItWorksSection } from "@/components/landing/HowItWorksSection";
-import { FreeLessonsSection } from "@/components/landing/FreeLessonsSection";
+import { FreeLessonsSampleSection } from "@/components/landing/FreeLessonsSampleSection";
+import { MidpointCTASection } from "@/components/landing/MidpointCTASection";
 import { WeeklyMockTestsSection } from "@/components/landing/WeeklyMockTestsSection";
 import { StudyPlanProgressSection } from "@/components/landing/StudyPlanProgressSection";
-import { ComputerDeliveredSection } from "@/components/landing/ComputerDeliveredSection";
 import { AITutorFeedbackSection } from "@/components/landing/AITutorFeedbackSection";
 import { FinalCTASection } from "@/components/landing/FinalCTASection";
 
@@ -28,16 +26,15 @@ export default function HomePage() {
       {/* Foreground Landing Content */}
       <div className="relative z-10 flex flex-col gap-20 pb-24">
         <HeroSection />
-        <InteractiveGlobeSection />
-        <SkillLabsSection />
         <HowItWorksSection />
-        <FreeLessonsSection />
+        <FreeLessonsSampleSection />
+        <MidpointCTASection />
         <WeeklyMockTestsSection />
         <StudyPlanProgressSection />
-        <ComputerDeliveredSection />
         <AITutorFeedbackSection />
         <FinalCTASection />
       </div>
     </div>
   );
 }
+

@@ -166,7 +166,7 @@ function ExamSimulatorInner() {
       <div className="min-h-[500px] flex flex-col items-center justify-center space-y-4">
         <Loader2 className="w-8 h-8 text-[#25A995] animate-spin" />
         <p className="text-sm font-semibold text-[#123C3A] dark:text-[#F4FAF8]">
-          Initializing Official Testing Environment...
+          Initializing Mock Test Environment...
         </p>
       </div>
     );

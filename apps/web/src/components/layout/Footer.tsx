@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ShieldCheck, CheckCircle2, ExternalLink } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 
 export const Footer: React.FC = () => {
@@ -68,18 +68,6 @@ export const Footer: React.FC = () => {
                 ? "BandBloom একটি স্বাধীন IELTS প্রস্তুতি প্ল্যাটফর্ম এবং এটি কোনো অফিসিয়াল IELTS টেস্টিং বা স্কোর-রিপোর্টিং সার্ভিস নয়।"
                 : "BandBloom is an independent IELTS preparation platform and is not an official IELTS testing or score-reporting service."}
             </p>
-
-            {/* Trust Badges */}
-            <div className="pt-1 flex flex-wrap items-center gap-2.5">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-[#123C3A] border border-[#D4E8E3] dark:border-[#205653] text-xs font-semibold text-[#123C3A] dark:text-[#F4FAF8] shadow-2xs">
-                <ShieldCheck className="w-4 h-4 text-[#25A995] shrink-0" aria-hidden="true" />
-                <span>{isBn ? "প্রাইভেসি-ফার্স্ট আর্কিটেকচার" : "Privacy-First Architecture"}</span>
-              </div>
-              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-[#123C3A] border border-[#D4E8E3] dark:border-[#205653] text-xs font-semibold text-[#123C3A] dark:text-[#F4FAF8] shadow-2xs">
-                <CheckCircle2 className="w-4 h-4 text-[#25A995] shrink-0" aria-hidden="true" />
-                <span>{isBn ? "WCAG ২.২ AA মান" : "WCAG 2.2 Level AA Standards"}</span>
-              </div>
-            </div>
           </div>
 
           {/* Column 2: Explore Navigation (2 columns on desktop) */}

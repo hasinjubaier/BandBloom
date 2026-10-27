@@ -128,11 +128,7 @@ export function HowItWorksSection() {
       aria-labelledby="how-it-works-heading"
     >
       {/* Section Header */}
-      <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-16">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E8F7F4] dark:bg-[#123C3A] border border-[#25A995]/30 text-[#25A995] text-xs font-semibold tracking-wider uppercase mb-3.5">
-          <span>{isBn ? "আপনার পথচলা" : "YOUR JOURNEY"}</span>
-        </div>
-
+      <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-14">
         <h2
           id="how-it-works-heading"
           className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#123C3A] dark:text-[#F4FAF8] tracking-tight mb-4"
@@ -159,16 +155,16 @@ export function HowItWorksSection() {
               <div>
                 {/* Top Row: Icon Container and Step Pill */}
                 <div className="flex items-center justify-between gap-3 mb-5">
-                  <div className="w-12 h-12 rounded-2xl bg-[#E8F7F4] dark:bg-[#0A1C1B] border border-[#25A995]/25 text-[#25A995] flex items-center justify-center shrink-0 group-hover:scale-105 group-hover:bg-[#25A995] group-hover:text-white transition-all duration-200 shadow-xs">
+                  <div className="w-12 h-12 rounded-2xl bg-[#E8F7F4] dark:bg-[#0A1C1B] border border-[#25A995]/25 text-[#167568] dark:text-[#25A995] flex items-center justify-center shrink-0 group-hover:scale-105 group-hover:bg-[#25A995] group-hover:text-white transition-all duration-200 shadow-xs">
                     <Icon className="w-6 h-6 transition-transform duration-200" aria-hidden="true" />
                   </div>
-                  <span className="text-xs font-bold tracking-wider font-mono px-3 py-1 rounded-full bg-[#F4FAF8] dark:bg-[#0A1C1B] text-[#25A995] border border-[#25A995]/20">
+                  <span className="text-xs font-semibold tracking-wider px-2.5 py-1 rounded-full bg-[#F4FAF8] dark:bg-[#0A1C1B] text-[#167568] dark:text-[#25A995] border border-[#D4E8E3] dark:border-[#205653]">
                     Step {item.step}
                   </span>
                 </div>
 
                 {/* Title */}
-                <h3 className="text-base sm:text-lg font-bold text-[#123C3A] dark:text-[#F4FAF8] mb-2.5 tracking-tight group-hover:text-[#25A995] transition-colors duration-150">
+                <h3 className="text-base sm:text-lg font-bold text-[#123C3A] dark:text-[#F4FAF8] mb-2.5 tracking-tight group-hover:text-[#167568] dark:group-hover:text-[#25A995] transition-colors duration-150">
                   {isBn ? item.title.bn : item.title.en}
                 </h3>
 
@@ -182,11 +178,11 @@ export function HowItWorksSection() {
               {item.note || item.link ? (
                 <div className="pt-4 mt-5 border-t border-[#D4E8E3]/70 dark:border-[#205653]/70">
                   {item.note && (
-                    <div className="flex items-center gap-1.5 text-[11px] text-[#3D6462] dark:text-[#A0C5C1]">
+                    <div className="flex items-center gap-1.5 text-xs text-[#3D6462] dark:text-[#A0C5C1]">
                       {item.step === "03" ? (
-                        <Sparkles className="w-3.5 h-3.5 text-[#25A995] shrink-0" aria-hidden="true" />
+                        <Sparkles className="w-3.5 h-3.5 text-[#167568] dark:text-[#25A995] shrink-0" aria-hidden="true" />
                       ) : (
-                        <CheckCircle2 className="w-3.5 h-3.5 text-[#25A995] shrink-0" aria-hidden="true" />
+                        <CheckCircle2 className="w-3.5 h-3.5 text-[#167568] dark:text-[#25A995] shrink-0" aria-hidden="true" />
                       )}
                       <span>{isBn ? item.note.bn : item.note.en}</span>
                     </div>
@@ -195,7 +191,7 @@ export function HowItWorksSection() {
                   {item.link && (
                     <Link
                       href={item.link.href}
-                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#25A995] hover:text-[#123C3A] dark:hover:text-white transition-colors group/link focus-visible:outline-none focus-visible:underline"
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#167568] dark:text-[#25A995] hover:text-[#123C3A] dark:hover:text-white transition-colors group/link focus-visible:outline-none focus-visible:underline"
                     >
                       <span>{isBn ? item.link.label.bn : item.link.label.en}</span>
                       <ArrowRight className="w-3.5 h-3.5 group-hover/link:translate-x-1 transition-transform" aria-hidden="true" />
@@ -206,38 +202,6 @@ export function HowItWorksSection() {
             </div>
           );
         })}
-      </div>
-
-      {/* Final Call-to-Action Area */}
-      <div className="mt-12 sm:mt-16 bg-gradient-to-r from-[#E8F7F4]/80 via-white to-[#FFF6F3]/80 dark:from-[#123C3A] dark:via-[#123C3A] dark:to-[#174A48] border border-[#D4E8E3] dark:border-[#205653] rounded-3xl p-8 sm:p-10 text-center shadow-xs">
-        <div className="max-w-2xl mx-auto space-y-3">
-          <h3 className="text-xl sm:text-2xl font-bold text-[#123C3A] dark:text-[#F4FAF8] tracking-tight">
-            {isBn ? "আপনার IELTS প্রস্তুতি শুরু করতে প্রস্তুত?" : "Ready to Start Your IELTS Journey?"}
-          </h3>
-
-          <p className="text-xs sm:text-sm text-[#3D6462] dark:text-[#A0C5C1] leading-relaxed max-w-xl mx-auto">
-            {isBn
-              ? "প্রথম পদক্ষেপটি নিন এবং একটি নিয়মতান্ত্রিক অনুশীলনের অভ্যাস গড়ে তুলুন।"
-              : "Take the first step and start building a consistent practice routine."}
-          </p>
-
-          <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3.5">
-            <Link
-              href="/signup"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#25A995] hover:bg-[#123C3A] text-white font-semibold text-xs sm:text-sm shadow-md shadow-[#25A995]/20 border border-transparent transition-all group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] focus-visible:ring-offset-2"
-            >
-              <span>{isBn ? "প্রস্তুতি শুরু করুন" : "Create Account to Start"}</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" aria-hidden="true" />
-            </Link>
-
-            <Link
-              href="/practice"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-white dark:bg-[#0A1C1B] hover:bg-[#F4FAF8] dark:hover:bg-[#123C3A] border border-[#D4E8E3] dark:border-[#205653] text-[#123C3A] dark:text-[#F4FAF8] font-semibold text-xs sm:text-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] focus-visible:ring-offset-2 shadow-2xs"
-            >
-              <span>{isBn ? "নমুনা অনুশীলন দেখুন" : "Explore Sample Practice"}</span>
-            </Link>
-          </div>
-        </div>
       </div>
     </section>
   );

@@ -17,7 +17,7 @@ import { ScoreCalculatorModal } from "@/components/ui/ScoreCalculatorModal";
 import { useLandingNavigation } from "@/hooks/useLandingNavigation";
 
 export const Navbar: React.FC = () => {
-  const { language, setLanguage } = useLanguage();
+  const { language, setLanguage, t } = useLanguage();
   const { theme, toggleTheme } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [calcOpen, setCalcOpen] = useState(false);
@@ -119,12 +119,12 @@ export const Navbar: React.FC = () => {
                   <span className="text-lg font-bold tracking-tight text-[#123C3A] dark:text-[#F4FAF8]">
                     Band<span className="text-[#25A995]">Bloom</span>
                   </span>
-                  <span className="text-[10px] tracking-wider text-[#3D6462] dark:text-[#FF8A65] font-semibold uppercase -mt-1 flex items-center gap-1">
+                  <span className="text-xs tracking-wider text-[#3D6462] dark:text-[#A0C5C1] font-semibold uppercase -mt-0.5 flex items-center gap-1">
                     <span
                       className="w-1.5 h-1.5 rounded-full bg-[#25A995] animate-pulse"
                       aria-hidden="true"
                     />
-                    IELTS SaaS
+                    IELTS Preparation
                   </span>
                 </div>
               </Link>
@@ -163,11 +163,11 @@ export const Navbar: React.FC = () => {
               <button
                 onClick={() => setCalcOpen(true)}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-[#174A48] border border-[#D4E8E3] dark:border-[#205653] text-xs font-medium text-[#3D6462] dark:text-[#A0C5C1] hover:text-[#123C3A] dark:hover:text-white hover:border-[#25A995] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995]"
-                title="IELTS Band Rounding Calculator"
-                aria-label={isBn ? "IELTS ব্যান্ড ক্যালকুলেটর" : "IELTS Band Rounding Calculator"}
+                title={t.calculator.navTrigger}
+                aria-label={t.calculator.navTrigger}
               >
                 <Calculator className="w-3.5 h-3.5 text-[#25A995]" aria-hidden="true" />
-                <span>{isBn ? "ব্যান্ড ক্যালকুলেটর" : "Band Calc"}</span>
+                <span>{t.calculator.navTrigger}</span>
               </button>
 
               {/* Language Switcher */}
@@ -228,14 +228,14 @@ export const Navbar: React.FC = () => {
                     href="/login"
                     className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-[#123C3A] dark:text-[#F4FAF8] hover:text-[#25A995] dark:hover:text-[#25A995] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995]"
                   >
-                    {isBn ? "লগইন" : "Sign in"}
+                    {isBn ? "সাইন ইন" : "Sign in"}
                   </Link>
 
                   <Link
                     href="/signup"
                     className="px-4 py-2 rounded-xl bg-[#25A995] hover:bg-[#123C3A] text-white text-xs sm:text-sm font-semibold shadow-md shadow-[#25A995]/25 border border-transparent transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] focus-visible:ring-offset-2 motion-safe:hover:-translate-y-0.5 active:translate-y-0 flex items-center gap-1.5"
                   >
-                    <span>{isBn ? "সাইন আপ" : "Sign Up"}</span>
+                    <span>{isBn ? "অ্যাকাউন্ট তৈরি করুন" : "Create account"}</span>
                     <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
                   </Link>
                 </>
@@ -260,8 +260,8 @@ export const Navbar: React.FC = () => {
               <button
                 onClick={() => setCalcOpen(true)}
                 className="p-2 text-[#3D6462] dark:text-[#A0C5C1] hover:text-[#123C3A] rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995]"
-                title="Band Calculator"
-                aria-label="Open Band Calculator"
+                title={t.calculator.navTrigger}
+                aria-label={t.calculator.navTrigger}
               >
                 <Calculator className="w-5 h-5 text-[#25A995]" aria-hidden="true" />
               </button>
@@ -352,17 +352,17 @@ export const Navbar: React.FC = () => {
                   <Link
                     href="/login"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[#25A995] hover:bg-[#123C3A] text-white text-sm font-semibold shadow-md shadow-[#25A995]/25 transition-all"
+                    className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-white dark:bg-[#174A48] border border-[#D4E8E3] dark:border-[#205653] text-[#123C3A] dark:text-[#F4FAF8] text-sm font-semibold hover:border-[#25A995] transition-all"
                   >
-                    <span>{isBn ? "লগইন করুন" : "Sign in to account"}</span>
-                    <ArrowRight className="w-4 h-4" aria-hidden="true" />
+                    <span>{isBn ? "সাইন ইন" : "Sign in"}</span>
                   </Link>
                   <Link
                     href="/signup"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-white dark:bg-[#174A48] border border-[#D4E8E3] dark:border-[#205653] text-[#123C3A] dark:text-[#F4FAF8] text-sm font-semibold hover:border-[#25A995] transition-all"
+                    className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[#25A995] hover:bg-[#123C3A] text-white text-sm font-semibold shadow-md shadow-[#25A995]/25 transition-all"
                   >
-                    <span>{isBn ? "অ্যাকাউন্ট তৈরি করুন" : "Create Account"}</span>
+                    <span>{isBn ? "অ্যাকাউন্ট তৈরি করুন" : "Create account"}</span>
+                    <ArrowRight className="w-4 h-4" aria-hidden="true" />
                   </Link>
                 </>
               )}

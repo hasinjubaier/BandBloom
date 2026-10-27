@@ -26,7 +26,7 @@ function toValidUuidOrNull(val?: string | null): string | null {
   return uuidRegex.test(trimmed) ? trimmed : null;
 }
 
-const SEED_MISTAKES: MistakeNoteData[] = [
+export const DEV_FIXTURE_MISTAKES: MistakeNoteData[] = [
   {
     id: "m-1",
     userId: "33333333-3333-3333-3333-333333333333",
@@ -107,15 +107,13 @@ export async function getStudentMistakes(
     sql += ` ORDER BY m.created_at DESC`;
 
     const res = await query<MistakeNoteData>(sql, params);
-    if (res.rows.length > 0) {
-      return res.rows.map((r) => ({
-        ...r,
-        correctAnswer: "Refer to reasoning breakdown",
-      }));
-    }
-    return SEED_MISTAKES;
-  } catch {
-    return SEED_MISTAKES;
+    return res.rows.map((r) => ({
+      ...r,
+      correctAnswer: "Refer to reasoning breakdown",
+    }));
+  } catch (error) {
+    console.error("[Notebook Service]: Failed to fetch student mistakes:", error);
+    throw error;
   }
 }
 
@@ -177,13 +175,19 @@ export async function updateMistakeRetryStatus(
   const safeId = toValidUuidOrNull(noteId);
   const targetStatus = status || "mastered";
 
-  if (safeId) {
-    await query(
-      `UPDATE mistake_notes 
-       SET retry_status = $1, updated_at = clock_timestamp()
-       WHERE id = $2 AND user_id = $3`,
-      [targetStatus, safeId, userId]
-    );
+  if (!safeId) {
+    throw new Error("Invalid mistake note ID format.");
+  }
+
+  const res = await query(
+    `UPDATE mistake_notes 
+     SET retry_status = $1, updated_at = clock_timestamp()
+     WHERE id = $2 AND user_id = $3`,
+    [targetStatus, safeId, userId]
+  );
+
+  if (res.rowCount === 0) {
+    throw new Error("Mistake note not found or access denied.");
   }
 
   return { id: noteId, retryStatus: targetStatus };

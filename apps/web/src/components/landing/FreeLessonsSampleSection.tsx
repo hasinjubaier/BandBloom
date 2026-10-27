@@ -172,30 +172,24 @@ export function FreeLessonsSampleSection() {
       aria-labelledby="free-lessons-heading"
     >
       {/* Section Header */}
-      <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-14">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E8F7F4] dark:bg-[#123C3A] border border-[#25A995]/30 text-[#25A995] text-xs font-semibold tracking-wider uppercase mb-3.5">
-          <Sparkles className="w-3.5 h-3.5 text-[#25A995]" aria-hidden="true" />
-          <span>{isBn ? "কাজের মাধ্যমে শিখুন" : "LEARN BY DOING"}</span>
+      <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-12">
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white dark:bg-[#123C3A] border border-[#D4E8E3] dark:border-[#205653] text-[#167568] dark:text-[#25A995] text-xs font-semibold shadow-xs mb-3.5">
+          <Sparkles className="w-3.5 h-3.5 text-[#167568] dark:text-[#25A995]" aria-hidden="true" />
+          <span>{isBn ? "নমুনা অনুশীলন" : "SAMPLE PRACTICE"}</span>
         </div>
 
         <h2
           id="free-lessons-heading"
-          className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#123C3A] dark:text-[#F4FAF8] tracking-tight mb-4"
+          className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#123C3A] dark:text-[#F4FAF8] tracking-tight mb-3"
         >
           {isBn ? "ফ্রি লেসন ও নমুনা অনুশীলন" : "Free Lessons & Sample Practice"}
         </h2>
 
         <p className="text-sm sm:text-base text-[#3D6462] dark:text-[#A0C5C1] leading-relaxed max-w-2xl mx-auto">
           {isBn
-            ? "নমুনা অনুশীলনগুলো পরীক্ষা করুন, অপরিহার্য IELTS স্কিল চর্চা করুন এবং দেখুন কীভাবে BandBloom-এর সাথে উন্নতি করা যায়।"
-            : "Explore sample exercises, practise essential IELTS skills, and discover how to improve with BandBloom."}
+            ? "নমুনা অনুশীলনগুলো পরীক্ষা করুন, অপরিহার্য IELTS স্কিল চর্চা করুন এবং দেখুন কীভাবে BandBloom-এর সাথে প্রস্তুতি নেওয়া যায়।"
+            : "Explore sample exercises across all four skills and discover how to prepare with BandBloom."}
         </p>
-
-        <div className="mt-3">
-          <span className="inline-block text-xs font-semibold text-[#25A995] bg-[#E8F7F4]/60 dark:bg-[#123C3A]/60 px-2.5 py-0.5 rounded-full border border-[#25A995]/20">
-            {isBn ? "সব ৪টি স্কিল অন্বেষণ করুন" : "Explore all four skills"}
-          </span>
-        </div>
       </div>
 
       {/* 4 Skill-Based Sample Cards Grid */}
@@ -221,22 +215,22 @@ export function FreeLessonsSampleSection() {
                   >
                     <Icon className="w-5 h-5" aria-hidden="true" />
                   </div>
-                  <span className="text-[11px] font-bold tracking-wider uppercase px-2.5 py-0.5 rounded-full bg-[#F4FAF8] dark:bg-[#0A1C1B] text-[#3D6462] dark:text-[#A0C5C1] border border-[#D4E8E3] dark:border-[#205653]">
+                  <span className="text-xs font-semibold tracking-wider uppercase px-2.5 py-0.5 rounded-full bg-[#F4FAF8] dark:bg-[#0A1C1B] text-[#3D6462] dark:text-[#A0C5C1] border border-[#D4E8E3] dark:border-[#205653]">
                     {isBn ? card.badgeBn : card.badge}
                   </span>
                 </div>
 
                 {/* Title & Description */}
-                <h3 className="text-base sm:text-lg font-bold text-[#123C3A] dark:text-[#F4FAF8] mb-1.5 group-hover:text-[#25A995] transition-colors duration-150">
+                <h3 className="text-base sm:text-lg font-bold text-[#123C3A] dark:text-[#F4FAF8] mb-1.5 group-hover:text-[#167568] dark:group-hover:text-[#25A995] transition-colors duration-150">
                   {isBn ? card.titleBn : card.title}
                 </h3>
                 <p className="text-xs text-[#3D6462] dark:text-[#A0C5C1] leading-relaxed mb-4">
                   {isBn ? card.descBn : card.desc}
                 </p>
 
-                {/* Realistic Activity Preview Box */}
+                {/* Activity Preview Box */}
                 <div className="bg-[#F4FAF8] dark:bg-[#0A1C1B] rounded-xl p-3 border border-[#D4E8E3]/80 dark:border-[#205653]/80 mb-4 text-left">
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-[#25A995] mb-1">
+                  <div className="text-xs font-bold uppercase tracking-wider text-[#167568] dark:text-[#25A995] mb-1">
                     {isBn ? card.previewLabelBn : card.previewLabel}
                   </div>
                   <p className="text-xs text-[#123C3A] dark:text-[#F4FAF8] font-medium line-clamp-3 leading-snug italic">
@@ -247,7 +241,7 @@ export function FreeLessonsSampleSection() {
 
               {/* Bottom Meta & CTA */}
               <div className="pt-3 border-t border-[#D4E8E3]/60 dark:border-[#205653]/60">
-                <div className="text-[11px] text-[#3D6462] dark:text-[#A0C5C1] mb-3 flex items-center gap-1.5">
+                <div className="text-xs text-[#3D6462] dark:text-[#A0C5C1] mb-3 flex items-center gap-1.5">
                   <CheckCircle2 className="w-3.5 h-3.5 text-[#25A995] shrink-0" aria-hidden="true" />
                   <span className="truncate">{isBn ? card.sampleMetaBn : card.sampleMeta}</span>
                 </div>
@@ -269,7 +263,7 @@ export function FreeLessonsSampleSection() {
       </div>
 
       {/* Featured Interactive Sample Playground */}
-      <div className="mt-12 bg-white dark:bg-[#123C3A] border border-[#D4E8E3] dark:border-[#205653] rounded-3xl p-6 sm:p-8 shadow-xs">
+      <div id="sample-exercise" className="mt-12 scroll-mt-24 bg-white dark:bg-[#123C3A] border border-[#D4E8E3] dark:border-[#205653] rounded-3xl p-6 sm:p-8 shadow-xs">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-6 border-b border-[#D4E8E3]/70 dark:border-[#205653]/70">
           <div>
             <div className="flex items-center gap-2 mb-1">
@@ -318,7 +312,7 @@ export function FreeLessonsSampleSection() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               {/* Passage Excerpt */}
               <div className="lg:col-span-7 bg-[#F4FAF8] dark:bg-[#0A1C1B] rounded-2xl p-5 border border-[#D4E8E3]/80 dark:border-[#205653]/80 text-left space-y-2">
-                <div className="flex items-center justify-between text-[11px] font-bold text-[#25A995] uppercase tracking-wider">
+                <div className="flex items-center justify-between text-xs font-bold text-[#167568] dark:text-[#25A995] uppercase tracking-wider">
                   <span>{isBn ? "প্যাসেজ অনুচ্ছেদ (Excerpt)" : "Passage Excerpt: Paragraph A"}</span>
                   <span className="text-[#3D6462] dark:text-[#A0C5C1] font-normal">IELTS Academic</span>
                 </div>
@@ -338,7 +332,7 @@ export function FreeLessonsSampleSection() {
                   </span>
                 </p>
                 {isAnswerSubmitted && (
-                  <div className="text-[11px] text-blue-600 dark:text-blue-400 font-semibold pt-1 flex items-center gap-1">
+                  <div className="text-xs text-blue-700 dark:text-blue-300 font-semibold pt-1 flex items-center gap-1">
                     <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
                     <span>{isBn ? "প্যাসেজ প্রমাণ চিহ্নিত করা হয়েছে" : "Evidence sentence highlighted in passage"}</span>
                   </div>
@@ -348,7 +342,7 @@ export function FreeLessonsSampleSection() {
               {/* Question & Options */}
               <div className="lg:col-span-5 flex flex-col justify-between space-y-4 text-left">
                 <div>
-                  <div className="text-[11px] font-bold text-[#3D6462] dark:text-[#A0C5C1] uppercase tracking-wider mb-1">
+                  <div className="text-xs font-bold text-[#3D6462] dark:text-[#A0C5C1] uppercase tracking-wider mb-1">
                     {isBn ? "প্রশ্ন ১ (True / False / Not Given)" : "Question 1 • True / False / Not Given"}
                   </div>
                   <p className="text-xs sm:text-sm font-semibold text-[#123C3A] dark:text-[#F4FAF8] mb-3 leading-snug">
@@ -393,9 +387,9 @@ export function FreeLessonsSampleSection() {
                       <div className="p-3 rounded-xl bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-xs">
                         <div className="font-bold text-emerald-800 dark:text-emerald-200 mb-1 flex items-center gap-1.5">
                           <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
-                          <span>{isBn ? "ব্যাখ্যা" : "Official Explanation"}</span>
+                          <span>{isBn ? "উত্তরের ব্যাখ্যা" : "Answer Explanation"}</span>
                         </div>
-                        <p className="text-[11px] text-emerald-700 dark:text-emerald-300 leading-relaxed">
+                        <p className="text-xs text-emerald-800 dark:text-emerald-200 leading-relaxed">
                           {readingQuestion.explanation}
                         </p>
                       </div>
@@ -410,7 +404,7 @@ export function FreeLessonsSampleSection() {
                         </button>
                         <Link
                           href="/lessons"
-                          className="inline-flex items-center gap-1.5 text-xs font-bold text-[#25A995] hover:underline"
+                          className="inline-flex items-center gap-1.5 text-xs font-bold text-[#167568] dark:text-[#25A995] hover:underline"
                         >
                           <span>{isBn ? "সম্পূর্ণ রিডিং লেসন খুলুন" : "Explore Reading Lessons"}</span>
                           <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
@@ -441,7 +435,7 @@ export function FreeLessonsSampleSection() {
         {activeTab === "listening" && (
           <div className="pt-6 space-y-4 text-left">
             <div className="bg-[#F4FAF8] dark:bg-[#0A1C1B] rounded-2xl p-5 border border-[#D4E8E3]/80 dark:border-[#205653]/80 space-y-3">
-              <div className="flex items-center justify-between text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
+              <div className="flex items-center justify-between text-xs font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider">
                 <span>{isBn ? "লিসেনিং সংলাপের অংশ" : "Listening Part 3 Audio Dialogue"}</span>
                 <span className="text-[#3D6462] dark:text-[#A0C5C1] font-normal">Australian & British Accents</span>
               </div>
@@ -458,16 +452,16 @@ export function FreeLessonsSampleSection() {
               </div>
               <div className="p-3 rounded-xl bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-xs text-amber-800 dark:text-amber-200 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
-                  <Headphones className="w-4 h-4 text-amber-600 shrink-0" aria-hidden="true" />
-                  <span className="text-[11px]">
+                  <Headphones className="w-4 h-4 text-amber-700 shrink-0" aria-hidden="true" />
+                  <span className="text-xs">
                     {isBn
-                      ? "পূর্ণাঙ্গ ল্যাবে অডিও প্লেয়ার, স্পিড কন্ট্রোল এবং ট্রান্সক্রিপ্ট আনলক অন্তর্ভুক্ত।"
-                      : "Native audio player with speed controls, distractor tags, and transcript sync available in the Listening Lab."}
+                      ? "পূর্ণাঙ্গ ল্যাবে অডিও প্লেয়ার, স্পিড কন্ট্রোল এবং ট্রান্সক্রিপ্ট অন্তর্ভুক্ত।"
+                      : "Audio player with speed controls and transcript sync available in the Listening Lab."}
                   </span>
                 </div>
                 <Link
                   href="/lessons"
-                  className="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs whitespace-nowrap transition-colors"
+                  className="px-3 py-1.5 rounded-lg bg-amber-700 hover:bg-amber-800 text-white font-bold text-xs whitespace-nowrap transition-colors"
                 >
                   {isBn ? "লিসেনিং লেসন দেখুন" : "Explore Listening Lessons"}
                 </Link>
@@ -480,7 +474,7 @@ export function FreeLessonsSampleSection() {
         {activeTab === "writing" && (
           <div className="pt-6 space-y-4 text-left">
             <div className="bg-[#F4FAF8] dark:bg-[#0A1C1B] rounded-2xl p-5 border border-[#D4E8E3]/80 dark:border-[#205653]/80 space-y-4">
-              <div className="flex items-center justify-between text-[11px] font-bold text-violet-600 dark:text-violet-400 uppercase tracking-wider">
+              <div className="flex items-center justify-between text-xs font-bold text-violet-700 dark:text-violet-400 uppercase tracking-wider">
                 <span>{isBn ? "টাস্ক ২ প্রবন্ধের বিষয়" : "Writing Task 2 Prompt & Rubric"}</span>
                 <span className="text-[#3D6462] dark:text-[#A0C5C1] font-normal">250 words • 40 minutes</span>
               </div>
@@ -493,25 +487,25 @@ export function FreeLessonsSampleSection() {
                     key={key}
                     className="p-3 rounded-xl bg-white dark:bg-[#123C3A] border border-[#D4E8E3] dark:border-[#205653]"
                   >
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-violet-600 dark:text-violet-400 capitalize mb-1">
+                    <div className="text-xs font-bold uppercase tracking-wider text-violet-700 dark:text-violet-400 capitalize mb-1">
                       {key.replace(/([A-Z])/g, " $1")}
                     </div>
                     <div className="text-base font-extrabold text-[#123C3A] dark:text-[#F4FAF8] mb-1">
                       Band {val.band}
                     </div>
-                    <p className="text-[11px] text-[#3D6462] dark:text-[#A0C5C1] line-clamp-2 leading-relaxed">
+                    <p className="text-xs text-[#3D6462] dark:text-[#A0C5C1] line-clamp-2 leading-relaxed">
                       {val.notes}
                     </p>
                   </div>
                 ))}
               </div>
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-2 text-xs">
-                <span className="text-[11px] text-[#3D6462] dark:text-[#A0C5C1]">
-                  * {isBn ? "মূল্যায়নগুলো অনানুষ্ঠানিক অনুশীলন নির্দেশিকা হিসেবে প্রদত্ত।" : "Evaluation rubrics provided as unofficial practice guidelines."}
+                <span className="text-xs text-[#3D6462] dark:text-[#A0C5C1]">
+                  * {isBn ? "রাইটিং ও স্পিকিং-এ অনানুষ্ঠানিক AI অনুমান অন্তর্ভুক্ত।" : "Writing and Speaking include unofficial AI estimates."}
                 </span>
                 <Link
                   href="/lessons"
-                  className="inline-flex items-center gap-1.5 font-bold text-violet-600 dark:text-violet-400 hover:underline"
+                  className="inline-flex items-center gap-1.5 font-bold text-violet-700 dark:text-violet-400 hover:underline"
                 >
                   <span>{isBn ? "রাইটিং লেসন ও মডেল রচনা দেখুন" : "Explore Writing Lessons & Models"}</span>
                   <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
@@ -525,7 +519,7 @@ export function FreeLessonsSampleSection() {
         {activeTab === "speaking" && (
           <div className="pt-6 space-y-4 text-left">
             <div className="bg-[#F4FAF8] dark:bg-[#0A1C1B] rounded-2xl p-5 border border-[#D4E8E3]/80 dark:border-[#205653]/80 space-y-4">
-              <div className="flex items-center justify-between text-[11px] font-bold text-[#FF7043] dark:text-[#FFA285] uppercase tracking-wider">
+              <div className="flex items-center justify-between text-xs font-bold text-[#FF7043] dark:text-[#FFA285] uppercase tracking-wider">
                 <span>{isBn ? "স্পিকিং পার্ট ২ কিউ কার্ড" : "Speaking Part 2 Cue Card Exercise"}</span>
                 <span className="text-[#3D6462] dark:text-[#A0C5C1] font-normal">1m Prep • 2m Speaking</span>
               </div>
@@ -534,7 +528,7 @@ export function FreeLessonsSampleSection() {
                   {`"${MOCK_SPEAKING_CUE_CARD.title}"`}
                 </h4>
                 <div className="text-xs text-[#3D6462] dark:text-[#A0C5C1] space-y-1 pl-1">
-                  <div className="text-[11px] font-semibold text-[#123C3A] dark:text-[#F4FAF8]">
+                  <div className="text-xs font-semibold text-[#123C3A] dark:text-[#F4FAF8]">
                     {isBn ? "আপনাকে বলতে হবে:" : "You should say:"}
                   </div>
                   {MOCK_SPEAKING_CUE_CARD.bullets.map((b, idx) => (
@@ -546,8 +540,8 @@ export function FreeLessonsSampleSection() {
                 </div>
               </div>
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-2 text-xs">
-                <span className="text-[11px] text-[#3D6462] dark:text-[#A0C5C1]">
-                  * {isBn ? "স্পিকিং অডিও রেকর্ডার ও স্বয়ংক্রিয় ট্রান্সক্রিপশন স্পিকিং ল্যাবে সংরক্ষিত।" : "Microphone audio recording and unofficial AI fluency breakdown are available in the Speaking Lab."}
+                <span className="text-xs text-[#3D6462] dark:text-[#A0C5C1]">
+                  * {isBn ? "রাইটিং ও স্পিকিং-এ অনানুষ্ঠানিক AI অনুমান অন্তর্ভুক্ত।" : "Writing and Speaking include unofficial AI estimates."}
                 </span>
                 <Link
                   href="/lessons"
@@ -559,38 +553,6 @@ export function FreeLessonsSampleSection() {
             </div>
           </div>
         )}
-      </div>
-
-      {/* Section-Level Call-to-Action Area */}
-      <div className="mt-12 sm:mt-16 bg-gradient-to-r from-[#E8F7F4]/80 via-white to-[#FFF6F3]/80 dark:from-[#123C3A] dark:via-[#123C3A] dark:to-[#174A48] border border-[#D4E8E3] dark:border-[#205653] rounded-3xl p-8 sm:p-10 text-center shadow-xs">
-        <div className="max-w-2xl mx-auto space-y-3">
-          <h3 className="text-xl sm:text-2xl font-bold text-[#123C3A] dark:text-[#F4FAF8] tracking-tight">
-            {isBn ? "আরও অন্বেষণ করতে প্রস্তুত?" : "Ready to Explore More?"}
-          </h3>
-
-          <p className="text-xs sm:text-sm text-[#3D6462] dark:text-[#A0C5C1] leading-relaxed max-w-xl mx-auto">
-            {isBn
-              ? "আরও ফ্রি লেসন আবিষ্কার করুন এবং আপনার IELTS স্কিল ধারাবাহিকভাবে গড়ে তুলুন।"
-              : "Discover more free lessons and keep building your IELTS skills."}
-          </p>
-
-          <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3.5">
-            <Link
-              href="/lessons"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#25A995] hover:bg-[#123C3A] text-white font-semibold text-xs sm:text-sm shadow-md shadow-[#25A995]/20 border border-transparent transition-all group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] focus-visible:ring-offset-2"
-            >
-              <span>{isBn ? "সব ফ্রি লেসন দেখুন" : "Explore All Free Lessons"}</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" aria-hidden="true" />
-            </Link>
-
-            <Link
-              href="/onboarding"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-white dark:bg-[#0A1C1B] hover:bg-[#F4FAF8] dark:hover:bg-[#123C3A] border border-[#D4E8E3] dark:border-[#205653] text-[#123C3A] dark:text-[#F4FAF8] font-semibold text-xs sm:text-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] focus-visible:ring-offset-2 shadow-2xs"
-            >
-              <span>{isBn ? "আপনার প্রস্তুতি শুরু করুন" : "Start Your Preparation"}</span>
-            </Link>
-          </div>
-        </div>
       </div>
     </section>
   );
