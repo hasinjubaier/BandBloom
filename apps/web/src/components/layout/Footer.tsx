@@ -12,15 +12,15 @@ export const Footer: React.FC = () => {
 
   return (
     <footer
-      className="bg-white dark:bg-[#123C3A] border-t border-[#D4E8E3] dark:border-[#205653] text-[#3D6462] dark:text-[#A0C5C1] text-sm transition-colors duration-200"
+      className="bg-[#F6FCF9] dark:bg-[#0C1F1E] border-t border-[#D4E8E3] dark:border-[#1E4D4A] text-[#3D6462] dark:text-[#A0C5C1] text-sm transition-colors duration-200"
       role="contentinfo"
       aria-label={isBn ? "ফুটার তথ্য ও নেভিগেশন" : "Footer Information and Navigation"}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-16 lg:py-20">
         {/* Main Footer Navigation Columns */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-8 lg:gap-10 mb-12 lg:mb-16">
-          {/* Column 1: Brand Info & Status */}
-          <div className="sm:col-span-2 lg:col-span-4 space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 lg:gap-8 xl:gap-12 mb-12 lg:mb-16">
+          {/* Column 1: Brand Info & Trust Signals (5 columns on desktop) */}
+          <div className="md:col-span-2 lg:col-span-5 space-y-5 pr-0 lg:pr-4">
             <Link
               href="/"
               onClick={(e) => {
@@ -32,61 +32,68 @@ export const Footer: React.FC = () => {
                   window.scrollTo({ top: 0, behavior: "smooth" });
                 }
               }}
-              className="inline-flex items-center gap-2.5 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] rounded-xl"
+              className="inline-flex items-center gap-3 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] rounded-xl"
               aria-label={isBn ? "BandBloom মূলপাতা" : "BandBloom Home"}
             >
-              <div className="w-9 h-9 rounded-xl overflow-hidden bg-white dark:bg-[#123C3A] border border-[#D4E8E3] dark:border-[#205653] flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform duration-200 shrink-0">
+              <div className="w-10 h-10 rounded-xl overflow-hidden bg-white dark:bg-[#123C3A] border border-[#D4E8E3] dark:border-[#205653] flex items-center justify-center shadow-xs group-hover:scale-105 group-hover:border-[#25A995] transition-all duration-200 shrink-0">
                 <Image
                   src="/logo.webp"
                   alt="BandBloom IELTS Logo"
-                  width={36}
-                  height={36}
+                  width={40}
+                  height={40}
                   className="w-full h-full object-contain p-0.5"
                 />
               </div>
-              <span className="text-xl font-bold tracking-tight text-[#123C3A] dark:text-[#F4FAF8]">
-                Band<span className="text-[#25A995]">Bloom</span>
-              </span>
+              <div className="flex flex-col">
+                <span className="text-xl font-extrabold tracking-tight text-[#123C3A] dark:text-[#F4FAF8] leading-tight">
+                  Band<span className="text-[#25A995]">Bloom</span>
+                </span>
+                <span className="text-[10px] font-bold tracking-wider uppercase text-[#3D6462] dark:text-[#A0C5C1] flex items-center gap-1.5 mt-0.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#25A995]" aria-hidden="true" />
+                  {isBn ? "IELTS প্রস্তুতি প্ল্যাটফর্ম" : "IELTS Preparation Platform"}
+                </span>
+              </div>
             </Link>
 
             {/* Platform Description */}
-            <p className="text-xs sm:text-sm text-[#3D6462] dark:text-[#A0C5C1] leading-relaxed max-w-sm">
+            <p className="text-xs sm:text-sm text-[#3D6462] dark:text-[#A0C5C1] leading-relaxed max-w-sm sm:max-w-md">
               {isBn
                 ? "চারটি স্কিলের কাঠামোগত অনুশীলন, কার্যকর ফিডব্যাক এবং নির্ভরযোগ্য রিসোর্স সহ ফ্রি IELTS প্রস্তুতি।"
                 : "Free IELTS preparation with structured practice, useful feedback, and learning resources for all four skills."}
             </p>
 
             {/* Independent Platform Disclaimer */}
-            <p className="text-xs text-[#5A7F7D] dark:text-[#8AA8A4] leading-relaxed max-w-sm">
+            <p className="text-xs text-[#527774] dark:text-[#7EA09D] leading-relaxed max-w-sm sm:max-w-md">
               {isBn
-                ? "BandBloom একটি স্বাধীন IELTS প্রস্তুতি প্ল্যাটফর্ম এবং এটি কোনো অফিসিয়াল IELTS টেস্টিং বা স্কোর-রিপোর্টিং সার্ভিস নয়।"
+                ? "BandBloom একটি স্বাধীন IELTS প্রস্তুতি প্ল্যাটফর্ম এবং এটি কোনো অফিসিয়াল IELTS টেস্টিং বা স্কোর-রিপোর্টিং সার্ভিস নয়।"
                 : "BandBloom is an independent IELTS preparation platform and is not an official IELTS testing or score-reporting service."}
             </p>
 
-            {/* Trust and Architectural Badges */}
-            <div className="space-y-1.5 pt-1 text-xs text-[#25A995] font-medium">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 shrink-0 text-[#25A995]" aria-hidden="true" />
+            {/* Trust Badges */}
+            <div className="pt-1 flex flex-wrap items-center gap-2.5">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-[#123C3A] border border-[#D4E8E3] dark:border-[#205653] text-xs font-semibold text-[#123C3A] dark:text-[#F4FAF8] shadow-2xs">
+                <ShieldCheck className="w-4 h-4 text-[#25A995] shrink-0" aria-hidden="true" />
                 <span>{isBn ? "প্রাইভেসি-ফার্স্ট আর্কিটেকচার" : "Privacy-First Architecture"}</span>
               </div>
-              <div className="flex items-center gap-2 text-[#3D6462] dark:text-[#A0C5C1]">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-[#123C3A] border border-[#D4E8E3] dark:border-[#205653] text-xs font-semibold text-[#123C3A] dark:text-[#F4FAF8] shadow-2xs">
                 <CheckCircle2 className="w-4 h-4 text-[#25A995] shrink-0" aria-hidden="true" />
-                <span>{isBn ? "WCAG ২.২ AA অ্যাক্সেসিবিলিটি মান" : "WCAG 2.2 Level AA Standards"}</span>
+                <span>{isBn ? "WCAG ২.২ AA মান" : "WCAG 2.2 Level AA Standards"}</span>
               </div>
             </div>
           </div>
 
-          {/* Column 2: Explore Navigation */}
-          <div className="sm:col-span-1 lg:col-span-2 space-y-4">
-            <h3 className="text-xs font-bold text-[#123C3A] dark:text-[#F4FAF8] uppercase tracking-wider">
-              {isBn ? "অন্বেষণ করুন" : "Explore"}
+          {/* Column 2: Explore Navigation (2 columns on desktop) */}
+          <div className="md:col-span-1 lg:col-span-2 space-y-4">
+            <h3 className="text-xs font-bold text-[#123C3A] dark:text-[#F4FAF8] uppercase tracking-wider flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#25A995]" aria-hidden="true" />
+              <span>{isBn ? "অন্বেষণ করুন" : "Explore"}</span>
             </h3>
             <nav aria-label={isBn ? "অন্বেষণ নেভিগেশন" : "Explore Navigation"}>
-              <ul className="space-y-2.5 text-xs sm:text-sm">
+              <ul className="space-y-1.5 text-xs sm:text-sm">
                 <li>
                   <Link
                     href="/how-it-works"
-                    className="hover:text-[#25A995] dark:hover:text-[#25A995] transition-colors duration-150 inline-block py-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] rounded"
+                    className="hover:text-[#198777] dark:hover:text-[#38D4BD] transition-colors duration-150 inline-flex items-center py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[#123C3A] rounded-md"
                   >
                     {isBn ? "কীভাবে কাজ করে" : "How It Works"}
                   </Link>
@@ -94,7 +101,7 @@ export const Footer: React.FC = () => {
                 <li>
                   <Link
                     href="/lessons"
-                    className="hover:text-[#25A995] dark:hover:text-[#25A995] transition-colors duration-150 inline-block py-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] rounded"
+                    className="hover:text-[#198777] dark:hover:text-[#38D4BD] transition-colors duration-150 inline-flex items-center py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[#123C3A] rounded-md"
                   >
                     {isBn ? "ফ্রি লেসন" : "Free Lessons"}
                   </Link>
@@ -102,7 +109,7 @@ export const Footer: React.FC = () => {
                 <li>
                   <Link
                     href="/practice"
-                    className="hover:text-[#25A995] dark:hover:text-[#25A995] transition-colors duration-150 inline-block py-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] rounded"
+                    className="hover:text-[#198777] dark:hover:text-[#38D4BD] transition-colors duration-150 inline-flex items-center py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[#123C3A] rounded-md"
                   >
                     {isBn ? "নমুনা অনুশীলন" : "Sample Practice"}
                   </Link>
@@ -110,7 +117,7 @@ export const Footer: React.FC = () => {
                 <li>
                   <Link
                     href="/test-types"
-                    className="hover:text-[#25A995] dark:hover:text-[#25A995] transition-colors duration-150 inline-block py-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] rounded"
+                    className="hover:text-[#198777] dark:hover:text-[#38D4BD] transition-colors duration-150 inline-flex items-center py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[#123C3A] rounded-md"
                   >
                     {isBn ? "পরীক্ষার ধরন" : "Test Types"}
                   </Link>
@@ -118,7 +125,7 @@ export const Footer: React.FC = () => {
                 <li>
                   <Link
                     href="/test-day-guide"
-                    className="hover:text-[#25A995] dark:hover:text-[#25A995] transition-colors duration-150 inline-block py-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] rounded"
+                    className="hover:text-[#198777] dark:hover:text-[#38D4BD] transition-colors duration-150 inline-flex items-center py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[#123C3A] rounded-md"
                   >
                     {isBn ? "পরীক্ষার দিনের গাইড" : "Test-day Guide"}
                   </Link>
@@ -127,17 +134,18 @@ export const Footer: React.FC = () => {
             </nav>
           </div>
 
-          {/* Column 3: Preparation & Account */}
-          <div className="sm:col-span-1 lg:col-span-3 space-y-4">
-            <h3 className="text-xs font-bold text-[#123C3A] dark:text-[#F4FAF8] uppercase tracking-wider">
-              {isBn ? "প্রস্তুতি ও অ্যাকাউন্ট" : "Get Started"}
+          {/* Column 3: Preparation & Account (2 columns on desktop) */}
+          <div className="md:col-span-1 lg:col-span-2 space-y-4">
+            <h3 className="text-xs font-bold text-[#123C3A] dark:text-[#F4FAF8] uppercase tracking-wider flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#25A995]" aria-hidden="true" />
+              <span>{isBn ? "প্রস্তুতি ও অ্যাকাউন্ট" : "Get Started"}</span>
             </h3>
             <nav aria-label={isBn ? "প্রস্তুতি ও অ্যাকাউন্ট নেভিগেশন" : "Preparation and Account Navigation"}>
-              <ul className="space-y-2.5 text-xs sm:text-sm">
+              <ul className="space-y-1.5 text-xs sm:text-sm">
                 <li>
                   <Link
                     href="/onboarding"
-                    className="hover:text-[#25A995] dark:hover:text-[#25A995] transition-colors duration-150 inline-block py-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] rounded font-medium"
+                    className="hover:text-[#198777] dark:hover:text-[#38D4BD] transition-colors duration-150 inline-flex items-center py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[#123C3A] rounded-md font-semibold text-[#123C3A] dark:text-[#F4FAF8]"
                   >
                     {isBn ? "প্রস্তুতি শুরু করুন" : "Start Preparation"}
                   </Link>
@@ -145,7 +153,7 @@ export const Footer: React.FC = () => {
                 <li>
                   <Link
                     href="/practice"
-                    className="hover:text-[#25A995] dark:hover:text-[#25A995] transition-colors duration-150 inline-block py-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] rounded"
+                    className="hover:text-[#198777] dark:hover:text-[#38D4BD] transition-colors duration-150 inline-flex items-center py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[#123C3A] rounded-md"
                   >
                     {isBn ? "অনুশীলন হাব" : "Practice Hub"}
                   </Link>
@@ -153,7 +161,7 @@ export const Footer: React.FC = () => {
                 <li>
                   <Link
                     href="/lessons"
-                    className="hover:text-[#25A995] dark:hover:text-[#25A995] transition-colors duration-150 inline-block py-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] rounded"
+                    className="hover:text-[#198777] dark:hover:text-[#38D4BD] transition-colors duration-150 inline-flex items-center py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[#123C3A] rounded-md"
                   >
                     {isBn ? "লেসন কারিকুলাম" : "Lessons Curriculum"}
                   </Link>
@@ -161,7 +169,7 @@ export const Footer: React.FC = () => {
                 <li>
                   <Link
                     href="/login"
-                    className="hover:text-[#25A995] dark:hover:text-[#25A995] transition-colors duration-150 inline-block py-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] rounded"
+                    className="hover:text-[#198777] dark:hover:text-[#38D4BD] transition-colors duration-150 inline-flex items-center py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[#123C3A] rounded-md"
                   >
                     {isBn ? "অ্যাকাউন্টে সাইন ইন" : "Sign In"}
                   </Link>
@@ -169,7 +177,7 @@ export const Footer: React.FC = () => {
                 <li>
                   <Link
                     href="/signup"
-                    className="hover:text-[#25A995] dark:hover:text-[#25A995] transition-colors duration-150 inline-block py-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] rounded"
+                    className="hover:text-[#198777] dark:hover:text-[#38D4BD] transition-colors duration-150 inline-flex items-center py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[#123C3A] rounded-md"
                   >
                     {isBn ? "নতুন অ্যাকাউন্ট তৈরি" : "Create Account"}
                   </Link>
@@ -178,17 +186,18 @@ export const Footer: React.FC = () => {
             </nav>
           </div>
 
-          {/* Column 4: Legal & Policies */}
-          <div className="sm:col-span-2 lg:col-span-3 space-y-4">
-            <h3 className="text-xs font-bold text-[#123C3A] dark:text-[#F4FAF8] uppercase tracking-wider">
-              {isBn ? "আইনি ও পলিসি" : "Legal & Policies"}
+          {/* Column 4: Legal & Policies (3 columns on desktop) */}
+          <div className="md:col-span-2 lg:col-span-3 space-y-4">
+            <h3 className="text-xs font-bold text-[#123C3A] dark:text-[#F4FAF8] uppercase tracking-wider flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#25A995]" aria-hidden="true" />
+              <span>{isBn ? "আইনি ও পলিসি" : "Legal & Policies"}</span>
             </h3>
             <nav aria-label={isBn ? "আইনি ও পলিসি নেভিগেশন" : "Legal & Policy Navigation"}>
-              <ul className="space-y-2.5 text-xs sm:text-sm">
+              <ul className="space-y-1.5 text-xs sm:text-sm">
                 <li>
                   <Link
                     href="/privacy"
-                    className="hover:text-[#25A995] dark:hover:text-[#25A995] transition-colors duration-150 inline-block py-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] rounded"
+                    className="hover:text-[#198777] dark:hover:text-[#38D4BD] transition-colors duration-150 inline-flex items-center py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[#123C3A] rounded-md"
                   >
                     {isBn ? "প্রাইভেসি পলিসি" : "Privacy Policy"}
                   </Link>
@@ -196,7 +205,7 @@ export const Footer: React.FC = () => {
                 <li>
                   <Link
                     href="/terms"
-                    className="hover:text-[#25A995] dark:hover:text-[#25A995] transition-colors duration-150 inline-block py-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] rounded"
+                    className="hover:text-[#198777] dark:hover:text-[#38D4BD] transition-colors duration-150 inline-flex items-center py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[#123C3A] rounded-md"
                   >
                     {isBn ? "ব্যবহারের শর্তাবলী" : "Terms of Service"}
                   </Link>
@@ -209,7 +218,7 @@ export const Footer: React.FC = () => {
                         ? "কুকি ও ডেটা স্টোরেজ শর্তাবলী প্রাইভেসি পলিসিতে অন্তর্ভুক্ত"
                         : "Cookie and telemetry terms are governed in the Privacy Policy"
                     }
-                    className="hover:text-[#25A995] dark:hover:text-[#25A995] transition-colors duration-150 inline-block py-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] rounded"
+                    className="hover:text-[#198777] dark:hover:text-[#38D4BD] transition-colors duration-150 inline-flex items-center py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[#123C3A] rounded-md"
                   >
                     {isBn ? "কুকি পলিসি" : "Cookie Policy"}
                   </Link>
@@ -217,7 +226,7 @@ export const Footer: React.FC = () => {
                 <li>
                   <Link
                     href="/disclaimer"
-                    className="hover:text-[#25A995] dark:hover:text-[#25A995] transition-colors duration-150 inline-block py-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] rounded"
+                    className="hover:text-[#198777] dark:hover:text-[#38D4BD] transition-colors duration-150 inline-flex items-center py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[#123C3A] rounded-md"
                   >
                     {isBn ? "কপিরাইট ও ট্রেডমার্ক দাবিত্যাগ" : "Copyright & Trademark Disclaimer"}
                   </Link>
@@ -225,7 +234,7 @@ export const Footer: React.FC = () => {
                 <li>
                   <Link
                     href="/ai-feedback-policy"
-                    className="hover:text-[#25A995] dark:hover:text-[#25A995] transition-colors duration-150 inline-block py-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] rounded"
+                    className="hover:text-[#198777] dark:hover:text-[#38D4BD] transition-colors duration-150 inline-flex items-center py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[#123C3A] rounded-md"
                   >
                     {isBn ? "AI ফিডব্যাক নীতি" : "AI Feedback Policy"}
                   </Link>
@@ -233,7 +242,7 @@ export const Footer: React.FC = () => {
                 <li>
                   <Link
                     href="/accessibility"
-                    className="hover:text-[#25A995] dark:hover:text-[#25A995] transition-colors duration-150 inline-block py-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] rounded"
+                    className="hover:text-[#198777] dark:hover:text-[#38D4BD] transition-colors duration-150 inline-flex items-center py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[#123C3A] rounded-md"
                   >
                     {isBn ? "অ্যাক্সেসিবিলিটি নির্দেশিকা" : "Accessibility Statement"}
                   </Link>
@@ -242,16 +251,16 @@ export const Footer: React.FC = () => {
                   <a
                     href="https://www.ielts.org"
                     target="_blank"
-                    rel="noreferrer"
+                    rel="noopener noreferrer"
                     aria-label={
                       isBn
                         ? "অফিসিয়াল IELTS পোর্টাল (নতুন ট্যাবে খুলবে)"
                         : "Official IELTS Portal (opens in a new tab)"
                     }
-                    className="inline-flex items-center gap-1.5 text-xs text-[#5A7F7D] dark:text-[#8AA8A4] hover:text-[#25A995] dark:hover:text-[#25A995] transition-colors duration-150 py-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] rounded"
+                    className="inline-flex items-center gap-1.5 text-xs text-[#527774] dark:text-[#7EA09D] hover:text-[#198777] dark:hover:text-[#38D4BD] transition-colors duration-150 py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25A995] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[#123C3A] rounded-md group"
                   >
                     <span>{isBn ? "অফিসিয়াল IELTS পোর্টাল" : "Official IELTS Portal"}</span>
-                    <ExternalLink className="w-3 h-3 shrink-0" aria-hidden="true" />
+                    <ExternalLink className="w-3 h-3 shrink-0 text-[#25A995] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-150" aria-hidden="true" />
                   </a>
                 </li>
               </ul>
@@ -259,34 +268,25 @@ export const Footer: React.FC = () => {
           </div>
         </div>
 
-        {/* Independent Platform & Trademark Notice Box */}
-        <div className="bg-[#F4FAF8] dark:bg-[#0A1C1B]/80 border border-[#D4E8E3] dark:border-[#205653] rounded-2xl p-4 sm:p-5 text-xs text-[#3D6462] dark:text-[#A0C5C1] leading-relaxed space-y-2 mb-8">
-          <div className="flex items-center gap-2 text-[#25A995] font-semibold uppercase tracking-wider text-[11px]">
-            <ShieldCheck className="w-4 h-4 text-[#25A995] shrink-0" aria-hidden="true" />
-            <span>
-              {isBn ? "স্বাধীন প্ল্যাটফর্ম ও ট্রেডমার্ক সংক্রান্ত বিজ্ঞপ্তি" : "Independent Platform Notice"}
-            </span>
-          </div>
-          <p>
-            {isBn
-              ? "BandBloom একটি স্বাধীন IELTS প্রস্তুতি প্ল্যাটফর্ম। এটি কোনো অফিসিয়াল IELTS পরীক্ষা বা স্কোর-রিপোর্টিং সার্ভিস হিসেবে পরিচালিত নয় এবং অফিসিয়াল পার্টনারদের সাথে কোনো প্রাতিষ্ঠানিক সম্পর্ক নেই।"
-              : "BandBloom is an independent IELTS preparation platform. It is not affiliated with, endorsed by, or operated as an official IELTS testing or score-reporting service."}
-          </p>
-          <p className="text-[11px] text-[#5A7F7D] dark:text-[#8AA8A4]">
-            {isBn
-              ? "IELTS® হল University of Cambridge ESOL, British Council এবং IDP Education Australia-এর নিবন্ধিত ট্রেডমার্ক। BandBloom-এ প্রদত্ত সকল অনুশীলনী, ডায়াগনস্টিক স্কোর ও AI গৃহশিক্ষকের ফিডব্যাক ব্যক্তিগত স্ব-প্রস্তুতির সহায়ক এবং এগুলো অফিসিয়াল টেস্ট ফলাফলের নিশ্চয়তা দেয় না।"
-              : "IELTS® is a registered trademark of University of Cambridge ESOL, the British Council, and IDP Education Australia. Practice materials, diagnostic band estimates, and AI feedback are educational diagnostic tools and do not guarantee official examination outcomes."}
-          </p>
+        {/* Oversized Outlined BandBloom Brand Signature (Reference Inspired) */}
+        <div
+          className="w-full overflow-hidden select-none pointer-events-none py-6 sm:py-10 lg:py-14 flex items-center justify-center"
+          aria-hidden="true"
+        >
+          <span className="footer-brand-signature block text-center font-black uppercase text-[15vw] sm:text-[14vw] lg:text-[13vw] xl:text-[160px] leading-none whitespace-nowrap">
+            BandBloom
+          </span>
         </div>
 
         {/* Copyright & Technical Strip */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#5A7F7D] dark:text-[#8AA8A4] pt-6 border-t border-[#D4E8E3] dark:border-[#205653]">
-          <p>
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#527774] dark:text-[#7EA09D] pt-6 border-t border-[#D4E8E3] dark:border-[#1E4D4A]">
+          <p className="text-center sm:text-left">
             {isBn
               ? "© ২০২৬ BandBloom। সর্বস্বত্ব সংরক্ষিত।"
               : "© 2026 BandBloom. All rights reserved."}
           </p>
-          <div className="flex items-center gap-4 text-[11px]">
+          <div className="flex items-center gap-2 text-[11px] text-[#3D6462] dark:text-[#A0C5C1] font-medium">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#25A995]" aria-hidden="true" />
             <span>
               {isBn
                 ? "স্বাধীন কম্পিউটার-ডেলিভার্ড প্রস্তুতি প্ল্যাটফর্ম"
@@ -298,3 +298,4 @@ export const Footer: React.FC = () => {
     </footer>
   );
 };
+
