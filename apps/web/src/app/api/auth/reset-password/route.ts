@@ -72,7 +72,7 @@ export async function POST(request: Request) {
       redirectTo: "/login",
     });
   } catch (error) {
-    console.error("Password reset error:", error);
+    console.error("[Password Reset Error]:", error instanceof Error ? error.message : "Internal error");
     return NextResponse.json(
       { success: false, error: "Failed to reset password due to server error." },
       { status: 500 }

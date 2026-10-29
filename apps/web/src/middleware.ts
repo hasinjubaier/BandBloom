@@ -10,6 +10,7 @@ const PUBLIC_PAGES = new Set([
   "/login",
   "/signup",
   "/forgot-password",
+  "/reset-password",
   "/terms",
   "/privacy",
   "/accessibility",
@@ -28,6 +29,8 @@ const PUBLIC_API_PREFIXES = [
   "/api/auth/forgot-password",
   "/api/auth/reset-password",
   "/api/auth/logout",
+  "/api/auth/google",
+  "/api/auth/callback/google",
 ];
 
 export function middleware(request: NextRequest) {

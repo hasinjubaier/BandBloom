@@ -119,8 +119,8 @@ export default function OnboardingPage() {
               <label className="block text-xs font-semibold text-[#3D6462] dark:text-[#A0C5C1] mb-2">
                 Target Overall Band Score: <strong className="text-[#25A995] text-sm">Band {targetBand.toFixed(1)}</strong>
               </label>
-              <div className="grid grid-cols-3 sm:grid-cols-7 gap-2">
-                {[6.0, 6.5, 7.0, 7.5, 8.0, 8.5, 9.0].map((b) => (
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                {[6.5, 7.0, 7.5, 8.0, 8.5, 9.0].map((b) => (
                   <button
                     key={b}
                     onClick={() => setTargetBand(b)}

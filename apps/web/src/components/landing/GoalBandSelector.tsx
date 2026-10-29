@@ -7,7 +7,7 @@ import { useTargetBand } from "@/hooks/useTargetBand";
 
 export function GoalBandSelector() {
   const { t } = useLanguage();
-  const { selectedTargetBand, availableBands, selectBand } = useTargetBand();
+  const { selectedTargetBand, availableBands, selectBand, isUnsupported } = useTargetBand();
 
   return (
     <div className="w-full">
@@ -21,7 +21,13 @@ export function GoalBandSelector() {
               {t.hero.targetHeading}
             </h2>
             <p className="text-xs text-[#3D6462] dark:text-[#A0C5C1]">
-              {t.hero.targetDesc}
+              {isUnsupported ? (
+                <span className="text-amber-600 dark:text-amber-400 font-semibold">
+                  Previous band is unsupported. Please choose a target band (6.5 – 9.0).
+                </span>
+              ) : (
+                t.hero.targetDesc
+              )}
             </p>
           </div>
         </div>

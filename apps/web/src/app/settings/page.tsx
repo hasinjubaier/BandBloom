@@ -180,7 +180,11 @@ export default function SettingsPage() {
                 onChange={(e) => setFormData({ ...formData, targetBand: parseFloat(e.target.value) })}
                 className="w-full px-4 py-2.5 rounded-xl bg-[#F9FCFB] dark:bg-[#174A48] border border-[#D4E8E3] dark:border-[#205653] text-xs sm:text-sm text-[#123C3A] dark:text-[#F4FAF8] focus:outline-none focus:border-[#25A995]"
               >
-                <option value="6.0">Band 6.0</option>
+                {![6.5, 7.0, 7.5, 8.0, 8.5, 9.0].includes(formData.targetBand) && (
+                  <option value={formData.targetBand} disabled>
+                    Unsupported (Band {formData.targetBand}) - Please choose 6.5 - 9.0
+                  </option>
+                )}
                 <option value="6.5">Band 6.5</option>
                 <option value="7.0">Band 7.0</option>
                 <option value="7.5">Band 7.5</option>

@@ -12,6 +12,16 @@ export function LoginForm() {
   const nextParam = searchParams.get("next") || searchParams.get("returnTo") || searchParams.get("redirect");
   const targetDestination = getSafeRedirectUrl(nextParam, "/dashboard");
 
+  const oauthErrorParam = searchParams.get("error");
+  const oauthBannerMessage =
+    oauthErrorParam === "google_oauth_unconfigured"
+      ? "Google OAuth is currently unconfigured in this deployment environment. Missing GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET credentials."
+      : oauthErrorParam === "account_suspended"
+      ? "This account has been suspended. Please contact support."
+      : oauthErrorParam
+      ? "Unable to complete Google authentication. Please try again or sign in with your email and password."
+      : null;
+
   // Form inputs
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -97,19 +107,12 @@ export function LoginForm() {
   };
 
   // Google OAuth Handler
-  const handleGoogleSignIn = async () => {
+  const handleGoogleSignIn = () => {
     if (isGoogleLoading) return;
     setIsGoogleLoading(true);
     setErrorMessage(null);
-
-    // Simulate provider handshake
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    // Clear and informative provider status
-    setGoogleInfoMessage(
-      "Google OAuth is currently unconfigured in this deployment environment. Missing GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET credentials."
-    );
-    setIsGoogleLoading(false);
+    setGoogleInfoMessage(null);
+    router.push(`/api/auth/google?next=${encodeURIComponent(targetDestination)}`);
   };
 
   return (
@@ -149,14 +152,14 @@ export function LoginForm() {
       )}
 
       {/* Google Provider Status Notification */}
-      {googleInfoMessage && (
+      {(googleInfoMessage || oauthBannerMessage) && (
         <div
           role="status"
           aria-live="polite"
           className="mb-5 p-3.5 rounded-xl bg-sky-50 dark:bg-sky-950/40 border border-sky-200 text-sky-800 dark:text-sky-300 text-xs sm:text-sm flex items-start gap-2.5 animate-fadeIn"
         >
           <AlertCircle className="w-4 h-4 text-sky-600 mt-0.5 shrink-0" aria-hidden="true" />
-          <span>{googleInfoMessage}</span>
+          <span>{googleInfoMessage || oauthBannerMessage}</span>
         </div>
       )}
 

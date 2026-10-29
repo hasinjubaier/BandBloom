@@ -1,4 +1,5 @@
-import { Pool, PoolClient, QueryResult, QueryResultRow } from "pg";
+import { Pool } from "pg";
+import type { PoolClient, QueryResult, QueryResultRow } from "pg";
 
 // Cache pool instance globally to prevent recreation during development HMR / hot-reloads
 const globalForDb = globalThis as unknown as { pgPool?: Pool };

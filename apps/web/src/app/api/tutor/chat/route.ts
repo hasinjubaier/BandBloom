@@ -15,6 +15,13 @@ export async function POST(request: Request) {
       );
     }
 
+    if (prompt.trim().length > 4000) {
+      return NextResponse.json(
+        { success: false, error: "Prompt exceeds maximum allowed length of 4000 characters." },
+        { status: 400 }
+      );
+    }
+
     const tutorResult = await askIeltsTutor(user.id, prompt, skill);
 
     return NextResponse.json({

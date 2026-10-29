@@ -154,19 +154,12 @@ export function SignupForm() {
   };
 
   // Google OAuth Handler
-  const handleGoogleSignup = async () => {
+  const handleGoogleSignup = () => {
     if (isGoogleLoading) return;
     setIsGoogleLoading(true);
     setErrorMessage(null);
-
-    // Simulate provider handshake
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    // Clear and informative provider status
-    setGoogleInfoMessage(
-      "Google OAuth is currently unconfigured in this deployment environment. Missing GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET credentials."
-    );
-    setIsGoogleLoading(false);
+    setGoogleInfoMessage(null);
+    router.push("/api/auth/google?next=/onboarding");
   };
 
   return (

@@ -28,6 +28,11 @@ export default function ResultsPage() {
     (a) => a.status === "submitted" || a.status === "evaluated"
   );
 
+  const formatScoreChip = (label: string, score: number | null | undefined) => {
+    const display = score !== null && score !== undefined ? `Band ${score.toFixed(1)}` : "Unavailable";
+    return `${label}: ${display}`;
+  };
+
   return (
     <div className="space-y-6 sm:space-y-8">
       {/* Header Banner */}
@@ -109,16 +114,16 @@ export default function ResultsPage() {
                 {/* 4 Skill Chips */}
                 <div className="flex flex-wrap items-center gap-2 pt-1">
                   <span className="px-2.5 py-1 rounded-lg bg-[#F4FAF8] dark:bg-[#174A48] border border-[#D4E8E3] dark:border-[#205653] text-xs font-semibold text-[#123C3A] dark:text-[#F4FAF8]">
-                    Reading: {att.readingScore ? `Band ${att.readingScore.toFixed(1)}` : "N/A"}
+                    {formatScoreChip("Reading", att.readingScore)}
                   </span>
                   <span className="px-2.5 py-1 rounded-lg bg-[#F4FAF8] dark:bg-[#174A48] border border-[#D4E8E3] dark:border-[#205653] text-xs font-semibold text-[#123C3A] dark:text-[#F4FAF8]">
-                    Listening: {att.listeningScore ? `Band ${att.listeningScore.toFixed(1)}` : "N/A"}
+                    {formatScoreChip("Listening", att.listeningScore)}
                   </span>
                   <span className="px-2.5 py-1 rounded-lg bg-[#F4FAF8] dark:bg-[#174A48] border border-[#D4E8E3] dark:border-[#205653] text-xs font-semibold text-[#123C3A] dark:text-[#F4FAF8]">
-                    Writing: {att.writingScore ? `Band ${att.writingScore.toFixed(1)}` : "N/A"}
+                    {formatScoreChip("Writing", att.writingScore)}
                   </span>
                   <span className="px-2.5 py-1 rounded-lg bg-[#F4FAF8] dark:bg-[#174A48] border border-[#D4E8E3] dark:border-[#205653] text-xs font-semibold text-[#123C3A] dark:text-[#F4FAF8]">
-                    Speaking: {att.speakingScore ? `Band ${att.speakingScore.toFixed(1)}` : "N/A"}
+                    {formatScoreChip("Speaking", att.speakingScore)}
                   </span>
                 </div>
               </div>
@@ -126,7 +131,9 @@ export default function ResultsPage() {
               <div className="flex items-center gap-4 shrink-0">
                 <div className="text-right">
                   <div className="text-2xl font-black text-[#25A995]">
-                    Band {att.overallBand?.toFixed(1) || "7.0"}
+                    {att.overallBand !== null && att.overallBand !== undefined
+                      ? `Band ${att.overallBand.toFixed(1)}`
+                      : "Pending"}
                   </div>
                   <div className="text-[10px] text-[#67839A] dark:text-[#A0C5C1] uppercase tracking-wider font-semibold">
                     Practice Overall

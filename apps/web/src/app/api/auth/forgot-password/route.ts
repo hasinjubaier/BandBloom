@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { query } from "@/server/db";
 import { generateToken, hashToken } from "@/server/auth/session";
+import { sendPasswordResetEmail } from "@/server/services/email.service";
 
 export async function POST(request: Request) {
   try {
@@ -34,7 +35,14 @@ export async function POST(request: Request) {
         [userId, tokenHash, expiresAt.toISOString()]
       );
 
-      // In production, send via email provider. In local development/testing, token is registered in auth_tokens
+      // Attempt dispatch via configured mail provider
+      const requestUrl = new URL(request.url);
+      const baseUrl = `${requestUrl.protocol}//${requestUrl.host}`;
+      await sendPasswordResetEmail({
+        to: trimmedEmail,
+        rawToken,
+        baseUrl,
+      });
     }
 
     // Generic response to mitigate account enumeration
@@ -44,7 +52,7 @@ export async function POST(request: Request) {
         "If an account exists for this email address, password reset instructions have been generated.",
     });
   } catch (error) {
-    console.error("Forgot password error:", error);
+    console.error("[Forgot Password Error]:", error instanceof Error ? error.message : "Internal error");
     return NextResponse.json(
       { success: false, error: "Unable to process password reset request." },
       { status: 500 }

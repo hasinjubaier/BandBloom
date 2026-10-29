@@ -2,6 +2,7 @@
 
 import React, { use, Suspense } from "react";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import {
   BookOpen,
   Headphones,
@@ -162,8 +163,12 @@ function SkillModuleContent({
   params: Promise<{ skill: string }>;
 }) {
   const { skill } = use(params);
-  const normalizedSkill = skill.toLowerCase();
-  const info = SKILL_DATA[normalizedSkill] || SKILL_DATA["reading"];
+  const normalizedSkill = typeof skill === "string" ? skill.toLowerCase().trim() : "";
+  const info = SKILL_DATA[normalizedSkill];
+
+  if (!info) {
+    notFound();
+  }
 
   const getSkillIcon = () => {
     switch (normalizedSkill) {

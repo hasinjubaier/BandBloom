@@ -84,9 +84,15 @@ export async function POST(
     });
   } catch (error: unknown) {
     const err = error as { status?: number; message?: string };
+    const isClientError =
+      err.message?.includes("expired") ||
+      err.message?.includes("already") ||
+      err.message?.includes("not found") ||
+      err.message?.includes("unauthorized");
+    const status = err.status || (isClientError ? 400 : 500);
     return NextResponse.json(
       { success: false, error: err.message || "Failed to submit exam." },
-      { status: err.status || 500 }
+      { status }
     );
   }
 }

@@ -12,6 +12,7 @@ export interface TutorResponse {
   reply: string;
   citations: string[];
   suggestedFollowUps: string[];
+  mode: "llm_generated" | "rubric_grounded_fallback";
 }
 
 const IELTS_RUBRIC_GUIDANCE: Record<string, string> = {
@@ -103,5 +104,6 @@ export async function askIeltsTutor(
     reply,
     citations,
     suggestedFollowUps,
+    mode: "rubric_grounded_fallback",
   };
 }

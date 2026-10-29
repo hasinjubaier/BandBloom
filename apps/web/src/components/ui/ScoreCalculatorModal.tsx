@@ -153,10 +153,18 @@ const CalculatorContent: React.FC<Omit<ScoreCalculatorModalProps, "isOpen">> = (
       aria-modal="true"
       aria-labelledby="calculator-modal-title"
       onKeyDown={handleKeyDown}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
       ref={modalRef}
       className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#123C3A]/60 dark:bg-black/85 backdrop-blur-sm animate-in fade-in duration-200"
     >
-      <div className="bg-white dark:bg-[#123C3A] border border-[#D4E8E3] dark:border-[#205653] rounded-2xl max-w-lg w-full shadow-2xl relative flex flex-col max-h-[calc(100dvh-1.5rem)] sm:max-h-[88dvh] overflow-hidden text-[#123C3A] dark:text-[#F4FAF8] transition-colors duration-200">
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="bg-white dark:bg-[#123C3A] border border-[#D4E8E3] dark:border-[#205653] rounded-2xl max-w-lg w-full shadow-2xl relative flex flex-col max-h-[calc(100dvh-1.5rem)] sm:max-h-[88dvh] overflow-hidden text-[#123C3A] dark:text-[#F4FAF8] transition-colors duration-200"
+      >
         {/* Header */}
         <div className="p-4 sm:p-5 border-b border-[#D4E8E3] dark:border-[#205653] flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3 pr-8">

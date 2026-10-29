@@ -45,6 +45,20 @@ export async function PATCH(request: Request) {
       modelTrainingOptIn,
     } = body;
 
+    const VALID_TARGET_BANDS = [6.5, 7.0, 7.5, 8.0, 8.5, 9.0];
+    if (targetBand !== undefined && targetBand !== null) {
+      const numBand = Number(targetBand);
+      if (!VALID_TARGET_BANDS.includes(numBand)) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Invalid target band. Supported bands are 6.5, 7.0, 7.5, 8.0, 8.5, and 9.0.",
+          },
+          { status: 400 }
+        );
+      }
+    }
+
     // Handle profile updates
     const updated = await updateStudentProfile(user.id, {
       fullName,

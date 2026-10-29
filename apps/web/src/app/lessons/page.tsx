@@ -115,7 +115,7 @@ export default function LessonsPage() {
               </span>
 
               <Link
-                href="/practice"
+                href={`/skills/${l.skill}`}
                 className="font-semibold text-[#25A995] hover:opacity-80 flex items-center gap-1"
               >
                 <span>Start Practice</span>

@@ -39,6 +39,7 @@ export interface ExamAttemptSummary {
   status: "in_progress" | "submitted" | "abandoned" | "evaluated";
   startedAt: string;
   submittedAt: string | null;
+  deadlineAt?: string | null;
   overallBand: number | null;
   readingScore: number | null;
   listeningScore: number | null;
@@ -381,6 +382,7 @@ export async function getStudentAttempts(userId: string): Promise<ExamAttemptSum
       status: "in_progress" | "submitted" | "abandoned" | "evaluated";
       started_at: string;
       submitted_at: string | null;
+      deadline_at: string | null;
       overall_band: number | null;
       reading_score: number | null;
       listening_score: number | null;
@@ -395,6 +397,7 @@ export async function getStudentAttempts(userId: string): Promise<ExamAttemptSum
          a.status, 
          a.started_at, 
          a.submitted_at,
+         a.deadline_at,
          MAX(CASE WHEN s.skill = 'overall' THEN s.estimated_band END) AS overall_band,
          MAX(CASE WHEN s.skill = 'reading' THEN s.estimated_band END) AS reading_score,
          MAX(CASE WHEN s.skill = 'listening' THEN s.estimated_band END) AS listening_score,
@@ -404,7 +407,7 @@ export async function getStudentAttempts(userId: string): Promise<ExamAttemptSum
        JOIN exams e ON a.exam_id = e.id
        LEFT JOIN scores s ON a.id = s.attempt_id
        WHERE a.user_id = $1
-       GROUP BY a.id, a.exam_id, e.title, e.test_type, a.status, a.started_at, a.submitted_at
+       GROUP BY a.id, a.exam_id, e.title, e.test_type, a.status, a.started_at, a.submitted_at, a.deadline_at
        ORDER BY a.started_at DESC`,
       [userId]
     );
@@ -417,6 +420,7 @@ export async function getStudentAttempts(userId: string): Promise<ExamAttemptSum
       status: r.status,
       startedAt: r.started_at,
       submittedAt: r.submitted_at,
+      deadlineAt: r.deadline_at,
       overallBand: r.overall_band !== null ? Number(r.overall_band) : null,
       readingScore: r.reading_score !== null ? Number(r.reading_score) : null,
       listeningScore: r.listening_score !== null ? Number(r.listening_score) : null,
@@ -443,6 +447,7 @@ export async function getAttemptById(
     writing: number | null;
     speaking: number | null;
   };
+  serverNow?: string;
 } | null> {
   try {
     const attemptRes = await query<{
@@ -452,8 +457,9 @@ export async function getAttemptById(
       status: "in_progress" | "submitted" | "abandoned" | "evaluated";
       started_at: string;
       submitted_at: string | null;
+      deadline_at: string | null;
     }>(
-      `SELECT id, exam_id, user_id, status, started_at, submitted_at
+      `SELECT id, exam_id, user_id, status, started_at, submitted_at, deadline_at
        FROM attempts
        WHERE id = $1 AND user_id = $2`,
       [attemptId, userId]
@@ -515,6 +521,7 @@ export async function getAttemptById(
         status: attemptRow.status,
         startedAt: attemptRow.started_at,
         submittedAt: attemptRow.submitted_at,
+        deadlineAt: attemptRow.deadline_at,
         overallBand: scores.overall,
         readingScore: scores.reading,
         listeningScore: scores.listening,
@@ -524,6 +531,7 @@ export async function getAttemptById(
       exam,
       responses,
       scores,
+      serverNow: new Date().toISOString(),
     };
   } catch {
     return null;
@@ -574,12 +582,17 @@ export async function saveExamResponse(
   responseJson: unknown
 ): Promise<void> {
   // Ensure attempt belongs to user and is in_progress
-  const chk = await query(
-    `SELECT id FROM attempts WHERE id = $1 AND user_id = $2 AND status = 'in_progress'`,
+  const chk = await query<{ id: string; deadline_at: string | null }>(
+    `SELECT id, deadline_at FROM attempts WHERE id = $1 AND user_id = $2 AND status = 'in_progress'`,
     [attemptId, userId]
   );
   if (chk.rows.length === 0) {
     throw new Error("Invalid attempt or attempt is not in progress.");
+  }
+
+  const attempt = chk.rows[0];
+  if (attempt.deadline_at && new Date(attempt.deadline_at).getTime() < Date.now()) {
+    throw new Error("Exam deadline has expired. Further edits are not allowed.");
   }
 
   await query(
@@ -602,23 +615,58 @@ export async function submitExamAttempt(
   writingScore: number;
   speakingScore: number;
 }> {
-  return withTransaction(async (client) => {
-    // 1. Verify attempt ownership
-    const attRes = await client.query<{ id: string; exam_id: string }>(
-      `SELECT id, exam_id FROM attempts WHERE id = $1 AND user_id = $2`,
-      [attemptId, userId]
-    );
-    if (attRes.rows.length === 0) {
-      throw new Error("Exam attempt not found or unauthorized.");
-    }
+  // 1. Verify attempt ownership, active status, and deadline enforcement outside the transaction
+  // so that marking an expired attempt as 'abandoned' persists immediately and is not rolled back.
+  const attRes = await query<{
+    id: string;
+    exam_id: string;
+    status: string;
+    deadline_at: string | null;
+  }>(
+    `SELECT id, exam_id, status, deadline_at FROM attempts WHERE id = $1 AND user_id = $2`,
+    [attemptId, userId]
+  );
+  if (attRes.rows.length === 0) {
+    throw new Error("Exam attempt not found or unauthorized.");
+  }
 
-    // 2. Mark attempt submitted
-    await client.query(
+  const attempt = attRes.rows[0];
+
+  // Enforce active status
+  if (attempt.status !== "in_progress") {
+    throw new Error(
+      `Exam attempt cannot be submitted because it is already ${attempt.status}.`
+    );
+  }
+
+  // Enforce server-side deadline with 60s network grace window
+  if (attempt.deadline_at) {
+    const deadlineMs = new Date(attempt.deadline_at).getTime();
+    const GRACE_PERIOD_MS = 60 * 1000;
+    if (Date.now() > deadlineMs + GRACE_PERIOD_MS) {
+      // Persist abandoned status immediately (auto-commits)
+      await query(
+        `UPDATE attempts SET status = 'abandoned' WHERE id = $1`,
+        [attemptId]
+      );
+      throw new Error("Exam deadline has expired. Final submission rejected.");
+    }
+  }
+
+  // 2. Perform atomic evaluation and submission in transaction
+  return withTransaction(async (client) => {
+    // Mark attempt submitted (conditional atomic update prevents concurrent double-submission)
+    const updateRes = await client.query(
       `UPDATE attempts 
        SET status = 'submitted', submitted_at = clock_timestamp()
-       WHERE id = $1`,
+       WHERE id = $1 AND status = 'in_progress'`,
       [attemptId]
     );
+    if ((updateRes.rowCount ?? 0) === 0) {
+      throw new Error(
+        "Exam attempt cannot be submitted because it is no longer in progress."
+      );
+    }
 
     // 3. Compute diagnostic scores with standard official band rounding
     const readingScore = 7.5;

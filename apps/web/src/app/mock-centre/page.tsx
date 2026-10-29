@@ -14,6 +14,7 @@ export default function MockCentrePage() {
   const [attempts, setAttempts] = useState<ExamAttemptSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [now, setNow] = useState<number | null>(null);
 
   const fetchData = async () => {
     setLoading(true);
@@ -44,6 +45,7 @@ export default function MockCentrePage() {
         const examsJson = await examsRes.json();
         const attemptsJson = await attemptsRes.json();
         if (!isMounted) return;
+        setNow(Date.now());
         if (examsJson.success) setExams(examsJson.exams);
         if (attemptsJson.success) setAttempts(attemptsJson.attempts);
       })
@@ -182,48 +184,82 @@ export default function MockCentrePage() {
           </h3>
 
           <div className="bg-white dark:bg-[#123C3A] rounded-3xl border border-[#D4E8E3] dark:border-[#205653] overflow-hidden shadow-xs divide-y divide-[#D4E8E3] dark:divide-[#205653]">
-            {attempts.map((att) => (
-              <div
-                key={att.id}
-                className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-              >
-                <div className="space-y-1">
-                  <div className="text-sm font-bold text-[#123C3A] dark:text-[#F4FAF8]">
-                    {att.examTitle}
-                  </div>
-                  <div className="flex items-center gap-3 text-xs text-[#67839A] dark:text-[#A0C5C1]">
-                    <span>
-                      Started: {new Date(att.startedAt).toLocaleDateString()}
-                    </span>
-                    <span className="capitalize px-2 py-0.5 rounded bg-[#F4FAF8] dark:bg-[#174A48] text-[#123C3A] dark:text-[#F4FAF8]">
-                      Status: {att.status}
-                    </span>
-                  </div>
-                </div>
+            {attempts.map((att) => {
+              const isEvaluated =
+                att.status === "evaluated" && att.overallBand !== null;
+              const isSubmitted =
+                att.status === "submitted" ||
+                (att.status === "evaluated" && att.overallBand === null);
+              const isExpired =
+                att.status === "in_progress" &&
+                !!att.deadlineAt &&
+                now !== null &&
+                new Date(att.deadlineAt).getTime() < now;
 
-                <div className="flex items-center gap-4">
-                  {att.overallBand !== null ? (
-                    <div className="text-right">
-                      <div className="text-base font-extrabold text-[#25A995]">
-                        Band {att.overallBand.toFixed(1)}
-                      </div>
-                      <div className="text-[10px] text-[#67839A] dark:text-[#A0C5C1]">
-                        Overall Practice
-                      </div>
+              return (
+                <div
+                  key={att.id}
+                  className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                >
+                  <div className="space-y-1">
+                    <div className="text-sm font-bold text-[#123C3A] dark:text-[#F4FAF8]">
+                      {att.examTitle}
                     </div>
-                  ) : (
-                    <span className="text-xs text-[#8AA4B7]">In Progress</span>
-                  )}
+                    <div className="flex items-center gap-3 text-xs text-[#67839A] dark:text-[#A0C5C1]">
+                      <span>
+                        Started: {new Date(att.startedAt).toLocaleDateString()}
+                      </span>
+                      <span className="capitalize px-2 py-0.5 rounded bg-[#F4FAF8] dark:bg-[#174A48] text-[#123C3A] dark:text-[#F4FAF8]">
+                        Status: {att.status}
+                      </span>
+                    </div>
+                  </div>
 
-                  <Link
-                    href={`/results/${att.id}`}
-                    className="px-3.5 py-1.5 rounded-xl bg-white dark:bg-[#174A48] border border-[#D4E8E3] dark:border-[#205653] text-xs font-semibold text-[#123C3A] dark:text-[#F4FAF8] hover:border-[#25A995] transition-colors"
-                  >
-                    View Report
-                  </Link>
+                  <div className="flex items-center gap-4">
+                    {isEvaluated ? (
+                      <div className="text-right">
+                        <div className="text-base font-extrabold text-[#25A995]">
+                          Band {att.overallBand?.toFixed(1)}
+                        </div>
+                        <div className="text-[10px] text-[#67839A] dark:text-[#A0C5C1]">
+                          Overall Practice
+                        </div>
+                      </div>
+                    ) : isSubmitted ? (
+                      <span className="text-xs text-[#8AA4B7]">Submitted</span>
+                    ) : (
+                      <span className="text-xs text-[#8AA4B7]">
+                        {isExpired ? "Time Expired" : "In Progress"}
+                      </span>
+                    )}
+
+                    {isEvaluated ? (
+                      <Link
+                        href={`/results/${att.id}`}
+                        className="px-3.5 py-1.5 rounded-xl bg-white dark:bg-[#174A48] border border-[#D4E8E3] dark:border-[#205653] text-xs font-semibold text-[#123C3A] dark:text-[#F4FAF8] hover:border-[#25A995] transition-colors"
+                      >
+                        View Report
+                      </Link>
+                    ) : isSubmitted ? (
+                      <span className="px-3.5 py-1.5 rounded-xl bg-[#F4FAF8] dark:bg-[#174A48] border border-[#D4E8E3] dark:border-[#205653] text-xs font-semibold text-[#67839A] dark:text-[#A0C5C1]">
+                        Awaiting Evaluation
+                      </span>
+                    ) : isExpired ? (
+                      <span className="px-3.5 py-1.5 rounded-xl bg-[#FFF1F0] dark:bg-[#3D1E1E] border border-[#FFA39E] dark:border-[#5C2223] text-xs font-semibold text-[#CF1322] dark:text-[#FF7875]">
+                        Time Expired
+                      </span>
+                    ) : (
+                      <Link
+                        href={`/mock-centre/exam?id=${att.examId}&attempt=${att.id}`}
+                        className="px-3.5 py-1.5 rounded-xl bg-[#25A995] text-white text-xs font-semibold hover:bg-[#1E8A7A] transition-colors"
+                      >
+                        Resume Exam
+                      </Link>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </section>
       )}

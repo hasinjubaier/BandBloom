@@ -13,6 +13,7 @@ export default function ForgotPasswordPage() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (isLoading) return;
     setErrorMessage(null);
 
     const trimmed = email.trim();
@@ -30,12 +31,22 @@ export default function ForgotPasswordPage() {
     setIsLoading(true);
 
     try {
-      // Simulate password reset request
-      await new Promise((resolve) => setTimeout(resolve, 800));
-      // Generic success to avoid email account enumeration (Section 8)
+      const res = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: trimmed }),
+      });
+
+      const data = await res.json().catch(() => null);
+
+      if (!res.ok) {
+        setErrorMessage(data?.error || "Unable to send recovery instructions. Please try again later.");
+        return;
+      }
+
       setSubmitted(true);
     } catch {
-      setErrorMessage("Unable to send recovery instructions. Please try again later.");
+      setErrorMessage("Unable to connect to the authentication service. Please check your connection and try again.");
     } finally {
       setIsLoading(false);
     }

@@ -35,6 +35,9 @@ function ExamSimulatorInner() {
   const [confirmSubmitOpen, setConfirmSubmitOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [savingAnswer, setSavingAnswer] = useState(false);
+  const [answersRestored, setAnswersRestored] = useState(false);
+  const [isExpired, setIsExpired] = useState(false);
+  const [initError, setInitError] = useState<string | null>(null);
 
   const handleSubmit = useCallback(async () => {
     if (!attemptId || submitting) return;
@@ -63,17 +66,19 @@ function ExamSimulatorInner() {
   useEffect(() => {
     async function init() {
       setLoading(true);
+      setInitError(null);
       try {
         // 1. Fetch Exam Detail
         const examRes = await fetch(`/api/exams/${examId}`);
         const examJson = await examRes.json();
-        if (examJson.success) {
-          setExam(examJson.exam);
-          setTimeLeftSeconds(examJson.exam.durationMinutes * 60);
+        if (!examRes.ok || !examJson.success) {
+          throw new Error(examJson.error || "Failed to load exam details.");
         }
+        setExam(examJson.exam);
 
         // 2. Start or Resume Attempt
-        if (!existingAttemptId) {
+        let activeAttemptId = existingAttemptId;
+        if (!activeAttemptId) {
           const startRes = await fetch("/api/attempts", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -81,18 +86,76 @@ function ExamSimulatorInner() {
           });
           const startJson = await startRes.json();
           if (startJson.success) {
-            setAttemptId(startJson.attemptId);
+            activeAttemptId = startJson.attemptId;
+            setAttemptId(activeAttemptId);
+          } else {
+            throw new Error(startJson.error || "Failed to initialize exam attempt.");
           }
         }
-      } catch (e) {
-        console.error("Exam init error:", e);
+
+        // 3. Load active attempt state (deadline, restored answers, status)
+        if (activeAttemptId) {
+          setAttemptId(activeAttemptId);
+          const attemptRes = await fetch(`/api/attempts/${activeAttemptId}`);
+          const attemptJson = await attemptRes.json();
+          if (!attemptRes.ok || !attemptJson.success) {
+            throw new Error(attemptJson.error || "Failed to load attempt data.");
+          }
+
+          const { attempt, responses: savedResponses, serverNow } = attemptJson;
+
+          // If attempt already completed or evaluated, redirect to results
+          if (attempt.status !== "in_progress") {
+            router.push(`/results/${activeAttemptId}`);
+            return;
+          }
+
+          // Restore previously saved answers (Priority 3)
+          const restored: Record<string, string> = {};
+          if (savedResponses && typeof savedResponses === "object") {
+            for (const [qId, resp] of Object.entries(savedResponses)) {
+              if (resp && typeof resp === "object" && "answer" in resp) {
+                restored[qId] = String((resp as { answer: unknown }).answer || "");
+              } else if (typeof resp === "string") {
+                restored[qId] = resp;
+              }
+            }
+          }
+          setResponses(restored);
+          setAnswersRestored(true);
+
+          // Enforce deadline with server offset (Priority 2)
+          if (!attempt.deadlineAt) {
+            setInitError("Attempt deadline is missing or invalid. Please return to Mock Centre.");
+            return;
+          }
+
+          const serverTimeMs = serverNow ? new Date(serverNow).getTime() : Date.now();
+          const deadlineMs = new Date(attempt.deadlineAt).getTime();
+          if (isNaN(deadlineMs)) {
+            setInitError("Attempt deadline format is invalid. Please return to Mock Centre.");
+            return;
+          }
+
+          const remainingSec = Math.floor((deadlineMs - serverTimeMs) / 1000);
+          if (remainingSec <= 0) {
+            setTimeLeftSeconds(0);
+            setIsExpired(true);
+            setInitError("This exam attempt has expired. You may submit your completed answers for evaluation.");
+          } else {
+            setTimeLeftSeconds(remainingSec);
+          }
+        }
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : "Failed to load exam attempt.";
+        setInitError(msg);
       } finally {
         setLoading(false);
       }
     }
 
     init();
-  }, [examId, existingAttemptId]);
+  }, [examId, existingAttemptId, router]);
 
   // Exam Countdown Timer
   useEffect(() => {
@@ -120,14 +183,14 @@ function ExamSimulatorInner() {
   const currentQuestion = currentSection?.questions[currentQuestionIndex];
 
   const handleSelectOption = async (optionText: string) => {
-    if (!currentQuestion || !attemptId) return;
+    if (!currentQuestion || !attemptId || !answersRestored || isExpired) return;
     const newResponses = { ...responses, [currentQuestion.id]: optionText };
     setResponses(newResponses);
 
     // Save response asynchronously
     setSavingAnswer(true);
     try {
-      await fetch(`/api/attempts/${attemptId}`, {
+      const res = await fetch(`/api/attempts/${attemptId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -135,21 +198,25 @@ function ExamSimulatorInner() {
           responseJson: { answer: optionText },
         }),
       });
+      const data = await res.json().catch(() => null);
+      if (!res.ok && data?.error && data.error.includes("expired")) {
+        setIsExpired(true);
+      }
     } catch {}
     setSavingAnswer(false);
   };
 
   const handleTextChange = async (text: string) => {
-    if (!currentQuestion || !attemptId) return;
+    if (!currentQuestion || !attemptId || !answersRestored || isExpired) return;
     setResponses({ ...responses, [currentQuestion.id]: text });
   };
 
   const handleTextBlur = async () => {
-    if (!currentQuestion || !attemptId) return;
+    if (!currentQuestion || !attemptId || !answersRestored || isExpired) return;
     const text = responses[currentQuestion.id] || "";
     setSavingAnswer(true);
     try {
-      await fetch(`/api/attempts/${attemptId}`, {
+      const res = await fetch(`/api/attempts/${attemptId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -157,6 +224,10 @@ function ExamSimulatorInner() {
           responseJson: { answer: text },
         }),
       });
+      const data = await res.json().catch(() => null);
+      if (!res.ok && data?.error && data.error.includes("expired")) {
+        setIsExpired(true);
+      }
     } catch {}
     setSavingAnswer(false);
   };
@@ -172,16 +243,34 @@ function ExamSimulatorInner() {
     );
   }
 
-  if (!exam) {
+  if (initError || !exam) {
     return (
-      <div className="p-8 text-center space-y-4">
-        <p className="text-sm text-rose-500">Exam configuration could not be loaded.</p>
-        <Link
-          href="/mock-centre"
-          className="px-4 py-2 rounded-xl bg-[#25A995] text-white text-xs font-bold inline-block"
-        >
-          Return to Mock Centre
-        </Link>
+      <div className="p-8 sm:p-12 text-center space-y-4 max-w-lg mx-auto bg-white dark:bg-[#123C3A] rounded-3xl border border-[#D4E8E3] dark:border-[#205653] my-12 shadow-xs">
+        <AlertTriangle className="w-10 h-10 text-rose-500 mx-auto" />
+        <h3 className="text-base font-bold text-[#123C3A] dark:text-[#F4FAF8]">
+          {isExpired ? "Exam Time Expired" : "Exam Configuration Error"}
+        </h3>
+        <p className="text-xs text-[#67839A] dark:text-[#A0C5C1] leading-relaxed">
+          {initError || "Exam configuration could not be loaded."}
+        </p>
+        <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+          {attemptId ? (
+            <button
+              onClick={handleSubmit}
+              disabled={submitting}
+              className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#25A995] text-white text-xs font-bold shadow-xs hover:bg-[#123C3A] transition-colors"
+            >
+              {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+              <span>Submit Attempt For Evaluation</span>
+            </button>
+          ) : null}
+          <Link
+            href="/mock-centre"
+            className="inline-flex items-center justify-center px-4 py-2.5 rounded-xl border border-[#D4E8E3] dark:border-[#205653] text-xs font-bold text-[#123C3A] dark:text-[#F4FAF8] hover:bg-[#F4FAF8] dark:hover:bg-[#174A48] transition-colors"
+          >
+            Return to Mock Centre
+          </Link>
+        </div>
       </div>
     );
   }
