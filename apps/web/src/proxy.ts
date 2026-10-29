@@ -33,7 +33,7 @@ const PUBLIC_API_PREFIXES = [
   "/api/auth/callback/google",
 ];
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
 
   const sessionCookie = request.cookies.get(SESSION_COOKIE_NAME)?.value;
@@ -94,6 +94,10 @@ export function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
+// Backwards-compatibility aliases
+export default proxy;
+export const middleware = proxy;
+
 export const config = {
   matcher: [
     /*
@@ -106,3 +110,4 @@ export const config = {
     "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|webp|ico|css|js)$).*)",
   ],
 };
+

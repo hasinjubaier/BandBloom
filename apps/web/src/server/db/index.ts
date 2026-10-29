@@ -48,7 +48,8 @@ export async function query<T extends QueryResultRow = QueryResultRow>(
   try {
     const res = await p.query<T>(text, params);
     const duration = Date.now() - start;
-    if (process.env.DEBUG === "True" && duration > 200) {
+    const isDebug = process.env.APP_DEBUG === "True" || process.env.DEBUG === "True";
+    if (isDebug && duration > 200) {
       console.warn(`[Slow Query (${duration}ms)]: ${text.slice(0, 80).replace(/\s+/g, " ").trim()}...`);
     }
     return res;

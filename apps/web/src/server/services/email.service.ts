@@ -37,7 +37,8 @@ export async function sendPasswordResetEmail({
 
   if (!hasSmtp && !hasResend) {
     // Unconfigured environment: Log safe diagnostic without exposing the token
-    if (process.env.DEBUG === "True" || process.env.NODE_ENV !== "production") {
+    const isDebug = process.env.APP_DEBUG === "True" || process.env.DEBUG === "True";
+    if (isDebug || process.env.NODE_ENV !== "production") {
       console.info(
         `[Email Service]: Outbound email delivery is unconfigured. Password reset token hash recorded in 'auth_tokens' table for recipient domain @${to.split("@")[1] || "unknown"}.`
       );
