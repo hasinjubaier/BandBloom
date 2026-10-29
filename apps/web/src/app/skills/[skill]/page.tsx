@@ -283,14 +283,21 @@ function SkillModuleContent({
           </div>
         </div>
 
-        <div className="shrink-0">
+        <div className="shrink-0 flex flex-col sm:flex-row items-center gap-3">
+          <Link
+            href={`/practice?lab=${normalizedSkill}&type=${testType || "academic"}`}
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-[#25A995] hover:bg-[#123C3A] text-white text-xs sm:text-sm font-bold shadow-md shadow-[#25A995]/20 transition-all duration-200"
+          >
+            <Sparkles className="w-4 h-4" />
+            <span>Launch Interactive Practice Lab</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
           <Link
             href={`/mock-centre/exam?id=${info.practiceExamId}`}
-            className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-[#25A995] hover:bg-[#123C3A] text-white text-xs sm:text-sm font-bold shadow-md shadow-[#25A995]/20 transition-all duration-200"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-white dark:bg-[#123C3A] border border-[#D4E8E3] dark:border-[#205653] hover:border-[#25A995] text-[#123C3A] dark:text-[#F4FAF8] text-xs sm:text-sm font-bold transition-all duration-200"
           >
             <FileCheck2 className="w-4 h-4" />
-            <span>Launch Practice Simulation</span>
-            <ArrowRight className="w-3.5 h-3.5" />
+            <span>Full Mock Exam</span>
           </Link>
         </div>
       </section>
