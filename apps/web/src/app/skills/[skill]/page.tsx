@@ -3,6 +3,7 @@
 import React, { use, Suspense } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import {
   BookOpen,
   Headphones,
@@ -163,11 +164,82 @@ function SkillModuleContent({
   params: Promise<{ skill: string }>;
 }) {
   const { skill } = use(params);
+  const searchParams = useSearchParams();
+  const testType = searchParams.get("type");
+
   const normalizedSkill = typeof skill === "string" ? skill.toLowerCase().trim() : "";
-  const info = SKILL_DATA[normalizedSkill];
+  let info = SKILL_DATA[normalizedSkill];
 
   if (!info) {
     notFound();
+  }
+
+  const isGT = testType === "general_training";
+
+  if (normalizedSkill === "writing" && isGT) {
+    info = {
+      ...info,
+      name: "IELTS General Training Writing",
+      badge: "GT Task 1 Letter & Task 2 Essay",
+      description:
+        "General Training Writing consists of Task 1 (a letter responding to a situation, min 150 words) and Task 2 (a discursive essay, min 250 words).",
+      questionTypes: [
+        {
+          type: "Task 1 Formal & Semi-Formal Letter",
+          tip: "State your purpose clearly in the opening, use appropriate formal salutations and sign-offs, and cover all bullet points.",
+        },
+        {
+          type: "Task 1 Personal & Informal Letter",
+          tip: "Adopt a warm, conversational tone with friends or family while maintaining clear paragraph cohesion.",
+        },
+        {
+          type: "Task 2 Discuss Both Views Essay",
+          tip: "Give balanced weight to both perspectives before clearly asserting your personal stance.",
+        },
+        {
+          type: "Task 2 Agree or Disagree Essay",
+          tip: "Formulate a strong thesis statement in the introduction and support each body paragraph with distinct examples.",
+        },
+      ],
+    };
+  } else if (normalizedSkill === "writing" && testType === "academic") {
+    info = {
+      ...info,
+      name: "IELTS Academic Writing",
+      badge: "Academic Task 1 Visual Data & Task 2 Essay",
+    };
+  } else if (normalizedSkill === "reading" && isGT) {
+    info = {
+      ...info,
+      name: "IELTS General Training Reading",
+      badge: "GT Workplace Notices & General Texts",
+      description:
+        "Assesses reading comprehension of everyday notices, staff employment manuals, job contracts, and extended general-interest publications.",
+      questionTypes: [
+        {
+          type: "Section 1 Social & Timetable Scanning",
+          tip: "Scan rapidly for specific dates, figures, accommodation rules, and conditional requirements.",
+        },
+        {
+          type: "Section 2 Workplace Safety & Staff Manuals",
+          tip: "Understand job descriptions, staff development policies, and operational safety instructions.",
+        },
+        {
+          type: "Section 3 Extended General Reading",
+          tip: "Read for complex logical arguments, chronological development, and author attitudes.",
+        },
+        {
+          type: "True / False / Not Given",
+          tip: "False directly contradicts information in the text; Not Given means insufficient information exists.",
+        },
+      ],
+    };
+  } else if (normalizedSkill === "reading" && testType === "academic") {
+    info = {
+      ...info,
+      name: "IELTS Academic Reading",
+      badge: "Academic Passages & Scientific Texts",
+    };
   }
 
   const getSkillIcon = () => {
