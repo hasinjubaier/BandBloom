@@ -7,6 +7,9 @@ export interface ExamSummary {
   status: string;
   durationMinutes: number;
   sectionsCount: number;
+  questionCount: number;
+  skills: ("listening" | "reading" | "writing" | "speaking")[];
+  category: "full_mock" | "sectional";
 }
 
 export interface ExamDetail extends ExamSummary {
@@ -92,6 +95,9 @@ const FALLBACK_EXAMS: ExamDetail[] = [
     status: "active",
     durationMinutes: 164,
     sectionsCount: 4,
+    questionCount: 4,
+    skills: ["listening", "reading", "writing", "speaking"],
+    category: "full_mock",
     sections: [
       {
         id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1",
@@ -169,25 +175,44 @@ const FALLBACK_EXAMS: ExamDetail[] = [
   },
   {
     id: "99999999-9999-9999-9999-999999999992",
-    title: "IELTS Academic Reading & Writing Section Test A",
-    testType: "academic",
+    title: "BandBloom General Training Diagnostic Full Mock 1",
+    testType: "general_training",
     status: "active",
-    durationMinutes: 120,
-    sectionsCount: 2,
+    durationMinutes: 164,
+    sectionsCount: 4,
+    questionCount: 4,
+    skills: ["listening", "reading", "writing", "speaking"],
+    category: "full_mock",
     sections: [
       {
-        id: "sec-rw-1",
-        skill: "reading",
-        durationSeconds: 3600,
+        id: "cccccccc-cccc-cccc-cccc-ccccccccccc1",
+        skill: "listening",
+        durationSeconds: 1800,
         orderIndex: 1,
-        instructions: "3 passages. Read carefully and answer 40 questions.",
+        instructions: "4 parts, 40 questions. Listen once as per standard test design.",
         questions: [
           {
-            id: "88888888-8888-8888-8888-888888888881",
+            id: "88888888-8888-8888-8888-888888888883",
+            skill: "listening",
+            type: "completion",
+            prompt: "Customer Surname: [_____] (First Name: Arthur)",
+            contextText: "Campus Orientation dialogue extract.",
+          },
+        ],
+      },
+      {
+        id: "cccccccc-cccc-cccc-cccc-ccccccccccc2",
+        skill: "reading",
+        durationSeconds: 3600,
+        orderIndex: 2,
+        instructions: "3 sections, 40 questions. 60 minutes total.",
+        questions: [
+          {
+            id: "88888888-8888-8888-8888-888888888885",
             skill: "reading",
             type: "true_false_not_given",
-            prompt: "All migratory birds travel south during the winter season.",
-            contextText: "Avian migration patterns vary widely across species...",
+            prompt: "A pulsing alarm tone instructs all staff to immediately evacuate the building.",
+            contextText: "Workplace fire safety notice.",
             options: [
               { id: "opt-1", optionText: "TRUE", optionOrder: 1 },
               { id: "opt-2", optionText: "FALSE", optionOrder: 2 },
@@ -197,18 +222,34 @@ const FALLBACK_EXAMS: ExamDetail[] = [
         ],
       },
       {
-        id: "sec-rw-2",
+        id: "cccccccc-cccc-cccc-cccc-ccccccccccc3",
         skill: "writing",
         durationSeconds: 3600,
-        orderIndex: 2,
-        instructions: "Task 2 Discursive Essay. Minimum 250 words.",
+        orderIndex: 3,
+        instructions: "Task 1 (min 150 words) and Task 2 (min 250 words). 60 minutes total.",
         questions: [
           {
             id: "88888888-8888-8888-8888-888888888882",
             skill: "writing",
             type: "task2_writing",
             prompt:
-              "Some people think that environmental problems are the responsibility of international organizations, while others believe individuals should take action. Discuss both views.",
+              "Some people believe that university education should be free for everyone, while others argue that students should pay tuition fees. Discuss both views and give your own opinion.",
+            contextText: null,
+          },
+        ],
+      },
+      {
+        id: "cccccccc-cccc-cccc-cccc-ccccccccccc4",
+        skill: "speaking",
+        durationSeconds: 840,
+        orderIndex: 4,
+        instructions: "3 parts, 11-14 minutes audio recorded responses.",
+        questions: [
+          {
+            id: "88888888-8888-8888-8888-888888888884",
+            skill: "speaking",
+            type: "part2_speaking",
+            prompt: "Describe an environmental initiative in your locality that you admire.",
             contextText: null,
           },
         ],
@@ -217,7 +258,7 @@ const FALLBACK_EXAMS: ExamDetail[] = [
   },
 ];
 
-export async function getAvailableExams(testType?: string): Promise<ExamSummary[]> {
+export async function getAvailableExams(testType?: string, category?: string): Promise<ExamSummary[]> {
   try {
     let sql = `
       SELECT 
@@ -225,40 +266,91 @@ export async function getAvailableExams(testType?: string): Promise<ExamSummary[
         e.title, 
         e.test_type AS "testType", 
         e.status,
-        COALESCE(SUM(es.duration_seconds), 0) / 60 AS "durationMinutes",
-        COUNT(es.id)::int AS "sectionsCount"
+        (COALESCE(SUM(es.duration_seconds), 0) / 60)::int AS "durationMinutes",
+        COUNT(DISTINCT es.id)::int AS "sectionsCount",
+        COALESCE((
+          SELECT COUNT(esq.question_id)::int 
+          FROM exam_sections es2 
+          JOIN exam_section_questions esq ON es2.id = esq.exam_section_id 
+          WHERE es2.exam_id = e.id
+        ), 0)::int AS "questionCount",
+        COALESCE(
+          ARRAY_REMOVE(ARRAY_AGG(DISTINCT es.skill), NULL), 
+          ARRAY[]::varchar[]
+        ) AS skills,
+        CASE 
+          WHEN COUNT(DISTINCT es.skill) >= 4 OR COUNT(DISTINCT es.id) >= 4 THEN 'full_mock' 
+          ELSE 'sectional' 
+        END AS category
       FROM exams e
       LEFT JOIN exam_sections es ON e.id = es.exam_id
       WHERE e.status = 'active'
+        AND e.title NOT ILIKE '%E2E%'
+        AND e.title NOT ILIKE '%[TEST]%'
+        AND e.title NOT ILIKE '%Test Exam%'
     `;
     const params: unknown[] = [];
     if (testType) {
+      const normalizedType = testType === "general" ? "general_training" : testType;
       sql += ` AND e.test_type = $1`;
-      params.push(testType);
+      params.push(normalizedType);
     }
-    sql += ` GROUP BY e.id ORDER BY e.created_at ASC`;
+    sql += ` GROUP BY e.id, e.title, e.test_type, e.status, e.created_at
+             HAVING COALESCE(SUM(es.duration_seconds), 0) > 0`;
+
+    if (category === "full_mock") {
+      sql += ` AND (COUNT(DISTINCT es.skill) >= 4 OR COUNT(DISTINCT es.id) >= 4)`;
+    } else if (category === "sectional") {
+      sql += ` AND (COUNT(DISTINCT es.skill) < 4 AND COUNT(DISTINCT es.id) < 4)`;
+    }
+
+    sql += ` ORDER BY 
+               CASE WHEN (COUNT(DISTINCT es.skill) >= 4 OR COUNT(DISTINCT es.id) >= 4) THEN 0 ELSE 1 END,
+               e.created_at ASC`;
 
     const res = await query<ExamSummary>(sql, params);
     if (res.rows.length > 0) {
       return res.rows;
     }
-    return FALLBACK_EXAMS.map((e) => ({
+    let fallback = FALLBACK_EXAMS.map((e) => ({
       id: e.id,
       title: e.title,
       testType: e.testType,
       status: e.status,
       durationMinutes: e.durationMinutes,
       sectionsCount: e.sectionsCount,
+      questionCount: e.questionCount ?? e.sections.reduce((acc, s) => acc + (s.questions?.length || 0), 0),
+      skills: e.skills ?? Array.from(new Set(e.sections.map((s) => s.skill))),
+      category: e.category ?? (e.sectionsCount >= 4 ? ("full_mock" as const) : ("sectional" as const)),
     }));
+    if (testType) {
+      const normalizedType = testType === "general" ? "general_training" : testType;
+      fallback = fallback.filter((e) => e.testType === normalizedType);
+    }
+    if (category) {
+      fallback = fallback.filter((e) => e.category === category);
+    }
+    return fallback;
   } catch {
-    return FALLBACK_EXAMS.map((e) => ({
+    let fallback = FALLBACK_EXAMS.map((e) => ({
       id: e.id,
       title: e.title,
       testType: e.testType,
       status: e.status,
       durationMinutes: e.durationMinutes,
       sectionsCount: e.sectionsCount,
+      questionCount: e.questionCount ?? e.sections.reduce((acc, s) => acc + (s.questions?.length || 0), 0),
+      skills: e.skills ?? Array.from(new Set(e.sections.map((s) => s.skill))),
+      category: e.category ?? (e.sectionsCount >= 4 ? ("full_mock" as const) : ("sectional" as const)),
     }));
+    if (testType) {
+      const normalizedType = testType === "general" ? "general_training" : testType;
+      fallback = fallback.filter((e) => e.testType === normalizedType);
+    }
+    if (category) {
+      fallback = fallback.filter((e) => e.category === category);
+    }
+    return fallback;
   }
 }
 
@@ -356,6 +448,10 @@ export async function getExamById(examId: string): Promise<ExamDetail | null> {
     );
 
     const totalSeconds = sections.reduce((acc, s) => acc + s.durationSeconds, 0);
+    const skills = Array.from(new Set(sections.map((s) => s.skill)));
+    const questionCount = sections.reduce((acc, s) => acc + s.questions.length, 0);
+    const category: "full_mock" | "sectional" =
+      sections.length >= 4 || skills.length >= 4 ? "full_mock" : "sectional";
 
     return {
       id: exam.id,
@@ -364,6 +460,9 @@ export async function getExamById(examId: string): Promise<ExamDetail | null> {
       status: exam.status,
       durationMinutes: Math.round(totalSeconds / 60),
       sectionsCount: sections.length,
+      questionCount,
+      skills,
+      category,
       sections,
     };
   } catch {

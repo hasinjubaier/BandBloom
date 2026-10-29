@@ -5,8 +5,9 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const testType = searchParams.get("testType") || undefined;
+    const category = searchParams.get("category") || undefined;
 
-    const exams = await getAvailableExams(testType);
+    const exams = await getAvailableExams(testType, category);
 
     return NextResponse.json({
       success: true,
