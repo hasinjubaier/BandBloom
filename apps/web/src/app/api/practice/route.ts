@@ -89,8 +89,13 @@ export async function POST(request: Request) {
     }
 
     if (action === "evaluate_listening") {
-      const { answers = {}, persist = true } = body;
-      const evaluation = evaluateListeningSubmission(answers);
+      const {
+        answers = {},
+        assessmentType = "diagnostic",
+        partNumber,
+        persist = true,
+      } = body;
+      const evaluation = evaluateListeningSubmission(answers, assessmentType, partNumber);
 
       let savedAttemptId: string | null = null;
       if (persist) {
@@ -99,9 +104,22 @@ export async function POST(request: Request) {
           examId,
           skill: "listening",
           answers,
+          rawScore: evaluation.score,
+          maxScore: evaluation.maxScore,
+          assessmentType: evaluation.assessmentType,
           estimatedBand: evaluation.estimatedBand,
-          feedbackText: `Scored ${evaluation.score}/${evaluation.total} (${evaluation.percentage}%) on listening dialogue drill.`,
+          feedbackText: evaluation.statusMessage,
           rubricJson: evaluation,
+          configSnapshot: {
+            assessmentType: evaluation.assessmentType,
+            partNumber: evaluation.partNumber,
+            rawScore: evaluation.score,
+            maxScore: evaluation.maxScore,
+            correctCount: evaluation.correctCount,
+            unansweredCount: evaluation.unansweredCount,
+            accuracy: evaluation.accuracy,
+            contentVersion: "2026.1",
+          },
           mistakes: evaluation.mistakesToRecord,
         });
         savedAttemptId = res.attemptId;

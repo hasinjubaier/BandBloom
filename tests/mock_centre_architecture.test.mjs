@@ -158,7 +158,8 @@ test("Requirement 2: Full Mocks vs Sectional category separation", async () => {
   assert.ok(secData.exams.length >= 1, "Must have sectional practice labs");
   for (const exam of secData.exams) {
     assert.equal(exam.category, "sectional");
-    assert.ok(exam.sectionsCount < 4, "Sectional lab must have fewer than 4 sections");
+    assert.ok(exam.sectionsCount <= 4, "Sectional lab must have at most 4 sections");
+    assert.ok(exam.skills.length < 4, "Sectional lab must have fewer than 4 skills");
   }
 });
 

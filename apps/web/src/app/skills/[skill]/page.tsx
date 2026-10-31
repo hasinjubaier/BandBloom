@@ -5,6 +5,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { useSearchParams } from "next/navigation";
 import ReadingModuleView from "@/components/portal/ReadingModuleView";
+import ListeningModuleView from "@/components/portal/ListeningModuleView";
 import {
   BookOpen,
   Headphones,
@@ -61,7 +62,7 @@ const SKILL_DATA: Record<string, SkillInfo> = {
         tip: "Eliminate distractor options containing universal quantifiers like 'all' or 'never' unless verified.",
       },
     ],
-    practiceExamId: "99999999-9999-9999-9999-999999999991",
+    practiceExamId: "22222222-2222-2222-2222-222222222222",
   },
   listening: {
     name: "IELTS Listening",
@@ -93,7 +94,7 @@ const SKILL_DATA: Record<string, SkillInfo> = {
         tip: "Keep answers grammatically coherent with the question stem.",
       },
     ],
-    practiceExamId: "99999999-9999-9999-9999-999999999991",
+    practiceExamId: "22222222-2222-2222-2222-222222222222",
   },
   writing: {
     name: "IELTS Writing",
@@ -126,7 +127,7 @@ const SKILL_DATA: Record<string, SkillInfo> = {
         tip: "Ensure proposed solutions directly resolve the specific causes identified in the problem paragraph.",
       },
     ],
-    practiceExamId: "99999999-9999-9999-9999-999999999991",
+    practiceExamId: "22222222-2222-2222-2222-222222222222",
   },
   speaking: {
     name: "IELTS Speaking",
@@ -155,7 +156,7 @@ const SKILL_DATA: Record<string, SkillInfo> = {
         tip: "Expand answers into abstract societal considerations rather than personal anecdotes.",
       },
     ],
-    practiceExamId: "99999999-9999-9999-9999-999999999991",
+    practiceExamId: "22222222-2222-2222-2222-222222222222",
   },
 };
 
@@ -177,6 +178,10 @@ function SkillModuleContent({
 
   if (normalizedSkill === "reading") {
     return <ReadingModuleView />;
+  }
+
+  if (normalizedSkill === "listening") {
+    return <ListeningModuleView />;
   }
 
   const isGT = testType === "general_training";

@@ -112,7 +112,16 @@ export interface ListeningEvaluationResult {
   score: number;
   total: number;
   percentage: number;
-  estimatedBand: number;
+  estimatedBand: number | null;
+  assessmentType?: "diagnostic" | "sectional_practice" | "full_listening_mock";
+  partNumber?: number;
+  maxScore?: number;
+  correctCount?: number;
+  unansweredCount?: number;
+  accuracy?: number;
+  confidenceLabel?: "supported" | "insufficient_evidence";
+  statusMessage?: string;
+  isUnofficial?: boolean;
   questionResults: {
     questionId: string;
     number: number;
@@ -121,6 +130,9 @@ export interface ListeningEvaluationResult {
     isCorrect: boolean;
     explanation: string;
     transcriptTimestamp: string;
+    wordCount?: number;
+    wordLimitExceeded?: boolean;
+    statusMessage?: string;
   }[];
   mistakesToRecord: {
     skill: "listening";

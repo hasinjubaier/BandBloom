@@ -1214,7 +1214,7 @@ export default function PracticeHubPage() {
               <div>
                 <span className="text-xs font-bold uppercase text-[#25A995]">Listening Band</span>
                 <h3 className="text-xl font-extrabold text-[#123C3A] dark:text-[#F4FAF8]">
-                  {listeningResult.score} / {listeningResult.total} ({listeningResult.percentage}%) — Estimated Band {listeningResult.estimatedBand.toFixed(1)}
+                  {listeningResult.score} / {listeningResult.total} ({listeningResult.percentage}%) — {listeningResult.estimatedBand !== null ? `Estimated Band ${listeningResult.estimatedBand.toFixed(1)}` : "Diagnostic Assessment"}
                 </h3>
               </div>
               <button

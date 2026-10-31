@@ -1,3 +1,5 @@
+import fs from "fs";
+import path from "path";
 import { query, withTransaction } from "@/server/db";
 
 export interface ExamSummary {
@@ -283,7 +285,7 @@ export async function getAvailableExams(testType?: string, category?: string): P
           ARRAY[]::varchar[]
         ) AS skills,
         CASE 
-          WHEN COUNT(DISTINCT es.skill) >= 4 OR COUNT(DISTINCT es.id) >= 4 THEN 'full_mock' 
+          WHEN COUNT(DISTINCT es.skill) >= 4 OR (COUNT(DISTINCT es.id) >= 4 AND (COALESCE(SUM(es.duration_seconds), 0) / 60) >= 120) THEN 'full_mock' 
           ELSE 'sectional' 
         END AS category
       FROM exams e
@@ -303,9 +305,9 @@ export async function getAvailableExams(testType?: string, category?: string): P
              HAVING COALESCE(SUM(es.duration_seconds), 0) > 0`;
 
     if (category === "full_mock") {
-      sql += ` AND (COUNT(DISTINCT es.skill) >= 4 OR COUNT(DISTINCT es.id) >= 4)`;
+      sql += ` AND (COUNT(DISTINCT es.skill) >= 4 OR (COUNT(DISTINCT es.id) >= 4 AND (COALESCE(SUM(es.duration_seconds), 0) / 60) >= 120))`;
     } else if (category === "sectional") {
-      sql += ` AND (COUNT(DISTINCT es.skill) < 4 AND COUNT(DISTINCT es.id) < 4)`;
+      sql += ` AND (COUNT(DISTINCT es.skill) < 4 AND (COUNT(DISTINCT es.id) < 4 OR (COALESCE(SUM(es.duration_seconds), 0) / 60) < 120))`;
     }
 
     sql += ` ORDER BY 
@@ -886,6 +888,226 @@ export async function checkFullReadingMockEligibility(examId: string): Promise<{
   return { eligible: true, questionCount: 40 };
 }
 
+export async function checkFullListeningMockEligibility(examId: string): Promise<{
+  eligible: boolean;
+  questionCount: number;
+  reason?: string;
+}> {
+  // 1. Verify exam existence, active status, and listening skill coverage
+  const examRes = await query<{
+    id: string;
+    title: string;
+    test_type: "academic" | "general_training";
+    status: string;
+  }>(
+    `SELECT id, title, test_type, status FROM exams WHERE id = $1`,
+    [examId]
+  );
+
+  if (examRes.rows.length === 0 || examRes.rows[0].status !== "active") {
+    return {
+      eligible: false,
+      questionCount: 0,
+      reason: "Exam not found or inactive.",
+    };
+  }
+
+  // 2. Query listening sections, questions, allocated marks, modules, and options
+  const questionsRes = await query<{
+    section_id: string;
+    order_index: number;
+    instructions: string | null;
+    question_id: string;
+    allocated_marks: string;
+    skill: string;
+    module: string;
+    type: string;
+    status: string;
+    prompt: string;
+    context_text: string | null;
+    media_asset_id: string | null;
+    option_count: string;
+    correct_option_count: string;
+  }>(
+    `SELECT 
+       es.id AS section_id,
+       es.order_index,
+       es.instructions,
+       esq.question_id,
+       esq.allocated_marks::text,
+       q.skill,
+       q.module,
+       q.type,
+       q.status,
+       q.prompt,
+       q.context_text,
+       q.media_asset_id,
+       COUNT(qo.id)::int AS option_count,
+       COUNT(CASE WHEN qo.is_correct = true THEN 1 END)::int AS correct_option_count
+     FROM exam_sections es
+     JOIN exam_section_questions esq ON es.id = esq.exam_section_id
+     JOIN questions q ON esq.question_id = q.id
+     LEFT JOIN question_options qo ON q.id = qo.question_id
+     WHERE es.exam_id = $1 AND es.skill = 'listening'
+     GROUP BY es.id, es.order_index, es.instructions, esq.question_id, esq.question_order, esq.allocated_marks, q.skill, q.module, q.type, q.status, q.prompt, q.context_text, q.media_asset_id
+     ORDER BY es.order_index ASC, esq.question_order ASC`,
+    [examId]
+  );
+
+  const rows = questionsRes.rows;
+  const distinctQuestionIds = new Set(rows.map((r) => r.question_id));
+  const totalAssigned = rows.length;
+  const distinctCount = distinctQuestionIds.size;
+
+  // 3. Verify exactly 4 distinct section records
+  const sectionsRes = await query<{
+    id: string;
+    order_index: number;
+    config: { part_number?: number; media_asset_id?: string } | null;
+  }>(
+    `SELECT id, order_index, config FROM exam_sections WHERE exam_id = $1 AND skill = 'listening' ORDER BY order_index ASC`,
+    [examId]
+  );
+
+  if (sectionsRes.rows.length !== 4) {
+    return {
+      eligible: false,
+      questionCount: distinctCount,
+      reason: `Full Listening Mock requires exactly 4 distinct parts (sections). Found ${sectionsRes.rows.length}.`,
+    };
+  }
+
+  // 4. Check 10 unique valid questions per part
+  for (let p = 1; p <= 4; p++) {
+    const sec = sectionsRes.rows[p - 1];
+    if (sec.order_index !== p) {
+      return {
+        eligible: false,
+        questionCount: distinctCount,
+        reason: `Full Listening Mock part ordering is invalid. Expected Part ${p} with order_index ${p}, found ${sec.order_index}.`,
+      };
+    }
+    const partQuestions = rows.filter((r) => r.section_id === sec.id);
+    if (partQuestions.length !== 10) {
+      return {
+        eligible: false,
+        questionCount: distinctCount,
+        reason: `Full Listening Mock requires exactly 10 questions for Part ${p}. Found ${partQuestions.length}.`,
+      };
+    }
+  }
+
+  // 5. Check strictly 40 questions total and no duplicate question associations
+  if (totalAssigned !== 40 || distinctCount !== 40) {
+    return {
+      eligible: false,
+      questionCount: distinctCount,
+      reason: `Full Listening Mock requires strictly 40 distinct scoreable questions across 4 parts. Found ${distinctCount} distinct questions (${totalAssigned} assigned).`,
+    };
+  }
+
+  // 6. Verify every part has a valid corresponding audio asset and actual file exists
+  for (let p = 1; p <= 4; p++) {
+    const sec = sectionsRes.rows[p - 1];
+    const mediaAssetId = sec.config?.media_asset_id;
+    if (!mediaAssetId) {
+      return {
+        eligible: false,
+        questionCount: distinctCount,
+        reason: `Part ${p} is missing a linked media_asset_id in its section configuration.`,
+      };
+    }
+
+    const mediaRes = await query<{
+      id: string;
+      object_key: string;
+      mime_type: string;
+      file_size_bytes: string | null;
+      duration_seconds: number | null;
+      metadata: Record<string, unknown> | null;
+    }>(
+      `SELECT id, object_key, mime_type, file_size_bytes, duration_seconds, metadata 
+       FROM media_assets WHERE id = $1`,
+      [mediaAssetId]
+    );
+
+    if (mediaRes.rows.length === 0) {
+      return {
+        eligible: false,
+        questionCount: distinctCount,
+        reason: `Media asset ${mediaAssetId} for Part ${p} does not exist in media_assets.`,
+      };
+    }
+
+    const asset = mediaRes.rows[0];
+    if (!asset.object_key || !asset.mime_type) {
+      return {
+        eligible: false,
+        questionCount: distinctCount,
+        reason: `Media asset ${mediaAssetId} for Part ${p} has missing object_key or mime_type.`,
+      };
+    }
+
+    // Verify physical file exists on disk
+    const publicPath = path.join(process.cwd(), "public", asset.object_key);
+    const appsWebPublicPath = path.join(process.cwd(), "apps/web/public", asset.object_key);
+    const fileExists = fs.existsSync(publicPath) || fs.existsSync(appsWebPublicPath);
+    if (!fileExists) {
+      return {
+        eligible: false,
+        questionCount: distinctCount,
+        reason: `Physical audio file for Part ${p} (${asset.object_key}) does not exist on disk. Full mock exams cannot be published with missing audio files.`,
+      };
+    }
+
+    // 7. Verify transcript relationship and verification status
+    const transcriptRes = await query<{
+      verification_status: string;
+      full_transcript: string;
+    }>(
+      `SELECT verification_status, full_transcript FROM audio_transcripts WHERE media_asset_id = $1 AND part_number = $2`,
+      [mediaAssetId, p]
+    );
+    if (transcriptRes.rows.length === 0 || transcriptRes.rows[0].verification_status !== "verified") {
+      return {
+        eligible: false,
+        questionCount: distinctCount,
+        reason: `Audio transcript for Part ${p} is missing or has not been marked as 'verified'.`,
+      };
+    }
+  }
+
+  // 8 & 9. Check allocated marks, prompt validity, and answer keys
+  for (const r of rows) {
+    if (Number(r.allocated_marks) <= 0) {
+      return {
+        eligible: false,
+        questionCount: distinctCount,
+        reason: `Full Listening Mock question ${r.question_id} has invalid allocated marks (${r.allocated_marks}). Must be greater than 0.`,
+      };
+    }
+
+    if (!r.prompt || r.prompt.trim() === "") {
+      return {
+        eligible: false,
+        questionCount: distinctCount,
+        reason: `Full Listening Mock question ${r.question_id} has empty prompt.`,
+      };
+    }
+
+    const requiresOptions = ["multiple_choice", "matching"];
+    if (requiresOptions.includes(r.type) && Number(r.option_count) > 0 && Number(r.correct_option_count) === 0) {
+      return {
+        eligible: false,
+        questionCount: distinctCount,
+        reason: `Full Listening Mock question ${r.question_id} (${r.type}) is missing a marked correct answer key.`,
+      };
+    }
+  }
+
+  return { eligible: true, questionCount: 40 };
+}
+
 export async function startExamAttempt(
   userId: string,
   examId: string,
@@ -916,12 +1138,13 @@ export async function startExamAttempt(
     "diagnostic",
     "sectional_practice",
     "full_reading_mock",
+    "full_listening_mock",
     "full_mock",
   ]);
 
   if (requestedAssessmentType && !ALLOWED_TYPES.has(requestedAssessmentType)) {
     const err = new Error(
-      `Invalid assessment type '${requestedAssessmentType}'. Allowed types: diagnostic, sectional_practice, full_reading_mock, full_mock.`
+      `Invalid assessment type '${requestedAssessmentType}'. Allowed types: diagnostic, sectional_practice, full_reading_mock, full_listening_mock, full_mock.`
     );
     (err as { status?: number }).status = 400;
     throw err;
@@ -931,9 +1154,9 @@ export async function startExamAttempt(
   const isConfiguredFullMock =
     exam.category === "full_mock" ||
     exam.title.toLowerCase().includes("full mock") ||
-    exam.sectionsCount >= 4;
+    (exam.sectionsCount >= 4 && exam.durationMinutes >= 120);
 
-  let finalAssessmentType: "diagnostic" | "sectional_practice" | "full_reading_mock" | "full_mock";
+  let finalAssessmentType: "diagnostic" | "sectional_practice" | "full_reading_mock" | "full_listening_mock" | "full_mock";
 
   if (isConfiguredFullMock) {
     // A database exam configured as a full mock CANNOT be started as a diagnostic or sectional attempt
@@ -961,11 +1184,24 @@ export async function startExamAttempt(
         throw err;
       }
     }
+
+    // For any full mock containing Listening, strictly enforce content eligibility
+    if (exam.skills.includes("listening")) {
+      const eligibility = await checkFullListeningMockEligibility(examId);
+      if (!eligibility.eligible) {
+        const err = new Error(
+          eligibility.reason || "Exam is not eligible for Full Mock."
+        );
+        (err as { status?: number }).status = 400;
+        throw err;
+      }
+    }
   } else {
     // Sectional or diagnostic practice exam
     if (
       requestedAssessmentType === "full_mock" ||
-      requestedAssessmentType === "full_reading_mock"
+      requestedAssessmentType === "full_reading_mock" ||
+      requestedAssessmentType === "full_listening_mock"
     ) {
       const err = new Error(
         "Cannot start a sectional or diagnostic practice exam as a full mock."
@@ -1132,7 +1368,8 @@ export async function submitExamAttempt(
         `INSERT INTO scores (attempt_id, skill, estimated_band, scoring_version, confidence_label, is_unofficial)
          VALUES 
            ($1, 'overall', NULL, '2026.1', 'insufficient_evidence', true),
-           ($1, 'reading', NULL, '2026.1', 'insufficient_evidence', true)
+           ($1, 'reading', NULL, '2026.1', 'insufficient_evidence', true),
+           ($1, 'listening', NULL, '2026.1', 'insufficient_evidence', true)
          ON CONFLICT (attempt_id, skill)
          DO UPDATE SET estimated_band = EXCLUDED.estimated_band, confidence_label = EXCLUDED.confidence_label`,
         [attemptId]
@@ -1188,4 +1425,303 @@ export async function submitExamAttempt(
       speakingScore,
     };
   });
+}
+
+export interface AttemptPlaybackState {
+  id: string;
+  attemptId: string;
+  mediaAssetId: string;
+  sectionId: string | null;
+  partNumber: number;
+  status: "not_started" | "playing" | "completed" | "failed";
+  startedAt: string | null;
+  completedAt: string | null;
+  playCount: number;
+  clientPlaybackMode: "simulation" | "timed" | "learning";
+  failureReason: string | null;
+}
+
+export async function getAttemptPlaybackStates(
+  attemptId: string,
+  userId: string
+): Promise<AttemptPlaybackState[]> {
+  const att = await query<{ id: string }>(
+    `SELECT id FROM attempts WHERE id = $1 AND user_id = $2`,
+    [attemptId, userId]
+  );
+  if (att.rows.length === 0) {
+    const err = new Error("Attempt not found or access denied.");
+    (err as { status?: number }).status = 404;
+    throw err;
+  }
+
+  const res = await query<{
+    id: string;
+    attempt_id: string;
+    media_asset_id: string;
+    section_id: string | null;
+    part_number: number;
+    status: "not_started" | "playing" | "completed" | "failed";
+    started_at: string | null;
+    completed_at: string | null;
+    play_count: number;
+    client_playback_mode: "simulation" | "timed" | "learning";
+    failure_reason: string | null;
+  }>(
+    `SELECT id, attempt_id, media_asset_id, section_id, part_number, status, started_at, completed_at, play_count, client_playback_mode, failure_reason
+     FROM attempt_playback_states
+     WHERE attempt_id = $1
+     ORDER BY part_number ASC`,
+    [attemptId]
+  );
+
+  return res.rows.map((r) => ({
+    id: r.id,
+    attemptId: r.attempt_id,
+    mediaAssetId: r.media_asset_id,
+    sectionId: r.section_id,
+    partNumber: r.part_number,
+    status: r.status,
+    startedAt: r.started_at,
+    completedAt: r.completed_at,
+    playCount: r.play_count,
+    clientPlaybackMode: r.client_playback_mode,
+    failureReason: r.failure_reason,
+  }));
+}
+
+export async function recordAttemptPlaybackAction(
+  attemptId: string,
+  userId: string,
+  partNumber: number,
+  action: "start" | "complete" | "fail",
+  failureReason?: string,
+  clientMode: "simulation" | "timed" | "learning" = "simulation"
+): Promise<AttemptPlaybackState> {
+  const attRes = await query<{
+    id: string;
+    exam_id: string;
+    status: string;
+    deadline_at: string | null;
+  }>(
+    `SELECT id, exam_id, status, deadline_at FROM attempts WHERE id = $1 AND user_id = $2`,
+    [attemptId, userId]
+  );
+  if (attRes.rows.length === 0) {
+    const err = new Error("Attempt not found or access denied.");
+    (err as { status?: number }).status = 404;
+    throw err;
+  }
+
+  const attempt = attRes.rows[0];
+  if (attempt.status !== "in_progress") {
+    const err = new Error(`Cannot modify audio playback on ${attempt.status} attempt.`);
+    (err as { status?: number }).status = 400;
+    throw err;
+  }
+
+  const secRes = await query<{
+    id: string;
+    config: { media_asset_id?: string } | null;
+  }>(
+    `SELECT id, config FROM exam_sections 
+     WHERE exam_id = $1 AND skill = 'listening' AND order_index = $2`,
+    [attempt.exam_id, partNumber]
+  );
+
+  const sectionId = secRes.rows[0]?.id || null;
+  const mediaAssetId =
+    secRes.rows[0]?.config?.media_asset_id || "aaaa1111-1111-1111-1111-11111111111" + partNumber;
+
+  const existingRes = await query<{
+    id: string;
+    status: "not_started" | "playing" | "completed" | "failed";
+    play_count: number;
+  }>(
+    `SELECT id, status, play_count FROM attempt_playback_states 
+     WHERE attempt_id = $1 AND part_number = $2`,
+    [attemptId, partNumber]
+  );
+
+  const existing = existingRes.rows[0] || null;
+
+  if (action === "start") {
+    if (
+      clientMode === "simulation" &&
+      existing &&
+      (existing.play_count >= 1 || existing.status === "playing" || existing.status === "completed") &&
+      existing.status !== "failed"
+    ) {
+      const err = new Error(
+        "Audio playback already initiated. Official IELTS simulation permits playing each recording ONCE only."
+      );
+      (err as { status?: number }).status = 403;
+      throw err;
+    }
+
+    const res = await query<{
+      id: string;
+      attempt_id: string;
+      media_asset_id: string;
+      section_id: string | null;
+      part_number: number;
+      status: "not_started" | "playing" | "completed" | "failed";
+      started_at: string | null;
+      completed_at: string | null;
+      play_count: number;
+      client_playback_mode: "simulation" | "timed" | "learning";
+      failure_reason: string | null;
+    }>(
+      `INSERT INTO attempt_playback_states (
+         attempt_id, media_asset_id, section_id, part_number, status, started_at, play_count, client_playback_mode
+       )
+       VALUES ($1, $2, $3, $4, 'playing', clock_timestamp(), 1, $5)
+       ON CONFLICT (attempt_id, part_number)
+       DO UPDATE SET
+         status = 'playing',
+         started_at = clock_timestamp(),
+         play_count = attempt_playback_states.play_count + 1,
+         client_playback_mode = EXCLUDED.client_playback_mode,
+         failure_reason = NULL,
+         updated_at = clock_timestamp()
+       RETURNING *`,
+      [attemptId, mediaAssetId, sectionId, partNumber, clientMode]
+    );
+
+    const r = res.rows[0];
+    return {
+      id: r.id,
+      attemptId: r.attempt_id,
+      mediaAssetId: r.media_asset_id,
+      sectionId: r.section_id,
+      partNumber: r.part_number,
+      status: r.status,
+      startedAt: r.started_at,
+      completedAt: r.completed_at,
+      playCount: r.play_count,
+      clientPlaybackMode: r.client_playback_mode,
+      failureReason: r.failure_reason,
+    };
+  }
+
+  if (action === "complete") {
+    const res = await query<{
+      id: string;
+      attempt_id: string;
+      media_asset_id: string;
+      section_id: string | null;
+      part_number: number;
+      status: "not_started" | "playing" | "completed" | "failed";
+      started_at: string | null;
+      completed_at: string | null;
+      play_count: number;
+      client_playback_mode: "simulation" | "timed" | "learning";
+      failure_reason: string | null;
+    }>(
+      `UPDATE attempt_playback_states
+       SET status = 'completed', completed_at = clock_timestamp(), updated_at = clock_timestamp()
+       WHERE attempt_id = $1 AND part_number = $2
+       RETURNING *`,
+      [attemptId, partNumber]
+    );
+
+    if (res.rows.length === 0) {
+      const ins = await query<{
+        id: string;
+        attempt_id: string;
+        media_asset_id: string;
+        section_id: string | null;
+        part_number: number;
+        status: "not_started" | "playing" | "completed" | "failed";
+        started_at: string | null;
+        completed_at: string | null;
+        play_count: number;
+        client_playback_mode: "simulation" | "timed" | "learning";
+        failure_reason: string | null;
+      }>(
+        `INSERT INTO attempt_playback_states (
+           attempt_id, media_asset_id, section_id, part_number, status, started_at, completed_at, play_count, client_playback_mode
+         )
+         VALUES ($1, $2, $3, $4, 'completed', clock_timestamp(), clock_timestamp(), 1, $5)
+         RETURNING *`,
+        [attemptId, mediaAssetId, sectionId, partNumber, clientMode]
+      );
+      const r = ins.rows[0];
+      return {
+        id: r.id,
+        attemptId: r.attempt_id,
+        mediaAssetId: r.media_asset_id,
+        sectionId: r.section_id,
+        partNumber: r.part_number,
+        status: r.status,
+        startedAt: r.started_at,
+        completedAt: r.completed_at,
+        playCount: r.play_count,
+        clientPlaybackMode: r.client_playback_mode,
+        failureReason: r.failure_reason,
+      };
+    }
+
+    const r = res.rows[0];
+    return {
+      id: r.id,
+      attemptId: r.attempt_id,
+      mediaAssetId: r.media_asset_id,
+      sectionId: r.section_id,
+      partNumber: r.part_number,
+      status: r.status,
+      startedAt: r.started_at,
+      completedAt: r.completed_at,
+      playCount: r.play_count,
+      clientPlaybackMode: r.client_playback_mode,
+      failureReason: r.failure_reason,
+    };
+  }
+
+  if (action === "fail") {
+    const res = await query<{
+      id: string;
+      attempt_id: string;
+      media_asset_id: string;
+      section_id: string | null;
+      part_number: number;
+      status: "not_started" | "playing" | "completed" | "failed";
+      started_at: string | null;
+      completed_at: string | null;
+      play_count: number;
+      client_playback_mode: "simulation" | "timed" | "learning";
+      failure_reason: string | null;
+    }>(
+      `INSERT INTO attempt_playback_states (
+         attempt_id, media_asset_id, section_id, part_number, status, failure_reason, play_count, client_playback_mode
+       )
+       VALUES ($1, $2, $3, $4, 'failed', $5, 0, $6)
+       ON CONFLICT (attempt_id, part_number)
+       DO UPDATE SET
+         status = 'failed',
+         failure_reason = EXCLUDED.failure_reason,
+         updated_at = clock_timestamp()
+       RETURNING *`,
+      [attemptId, mediaAssetId, sectionId, partNumber, failureReason || "Media load failed", clientMode]
+    );
+
+    const r = res.rows[0];
+    return {
+      id: r.id,
+      attemptId: r.attempt_id,
+      mediaAssetId: r.media_asset_id,
+      sectionId: r.section_id,
+      partNumber: r.part_number,
+      status: r.status,
+      startedAt: r.started_at,
+      completedAt: r.completed_at,
+      playCount: r.play_count,
+      clientPlaybackMode: r.client_playback_mode,
+      failureReason: r.failure_reason,
+    };
+  }
+
+  const err = new Error(`Unknown playback action: ${action}`);
+  (err as { status?: number }).status = 400;
+  throw err;
 }

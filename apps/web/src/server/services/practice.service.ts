@@ -5,6 +5,12 @@ import {
   calculateIndicativeReadingBand,
 } from "@/lib/reading-module-data";
 import {
+  LISTENING_PARTS,
+  validateListeningAnswer,
+  getListeningBandFromScore,
+  isNumericToken,
+} from "@/lib/listening-module-data";
+import {
   ACADEMIC_READING_PASSAGE,
   GT_READING_PASSAGE,
   LISTENING_ACTIVITY,
@@ -106,21 +112,160 @@ export function evaluateReadingSubmission(
 }
 
 export function evaluateListeningSubmission(
-  answers: Record<string, string>
+  answers: Record<string, string>,
+  assessmentType: "diagnostic" | "sectional_practice" | "full_listening_mock" = "diagnostic",
+  partNumber?: 1 | 2 | 3 | 4
 ): ListeningEvaluationResult {
+  // Legacy Practice Hub Campus Tour Dialogue check
+  const isCampusTour =
+    !partNumber &&
+    assessmentType !== "full_listening_mock" &&
+    (answers["lq-1"]?.toLowerCase().includes("pendelton") ||
+      answers["lq-2"]?.toLowerCase().includes("thursday") ||
+      (Object.keys(answers).length <= 3 &&
+        answers["lq-1"] &&
+        !answers["lq-4"] &&
+        !answers["lq-10"] &&
+        !answers["lq-11"] &&
+        answers["lq-1"]?.toLowerCase() === "pendelton"));
+
+  if (isCampusTour) {
+    let correctCount = 0;
+    const questionResults = [];
+    const mistakesToRecord = [];
+
+    for (const q of LISTENING_ACTIVITY.questions) {
+      const rawStudent = (answers[q.id] || "").trim();
+      const isCorrect = rawStudent.toLowerCase() === q.correctAnswer.toLowerCase();
+
+      if (isCorrect) correctCount++;
+      else if (rawStudent) {
+        mistakesToRecord.push({
+          skill: "listening" as const,
+          errorTag: q.type === "Form Completion" ? "spelling" : "inference trap",
+          questionPrompt: q.prompt,
+          studentAnswer: rawStudent,
+          correctAnswer: q.correctAnswer,
+          reasoning: `${q.explanation} (Audio Timestamp: ${q.transcriptTimestamp})`,
+        });
+      }
+
+      questionResults.push({
+        questionId: q.id,
+        number: q.number,
+        studentAnswer: rawStudent || "No answer provided",
+        correctAnswer: q.correctAnswer,
+        isCorrect,
+        explanation: q.explanation,
+        transcriptTimestamp: q.transcriptTimestamp,
+      });
+    }
+
+    const total = LISTENING_ACTIVITY.questions.length;
+    const percentage = Math.round((correctCount / total) * 100);
+
+    let estimatedBand = 4.0;
+    if (correctCount === 3) estimatedBand = 8.0;
+    else if (correctCount === 2) estimatedBand = 6.5;
+    else if (correctCount === 1) estimatedBand = 5.5;
+
+    return {
+      score: correctCount,
+      total,
+      percentage,
+      estimatedBand,
+      questionResults,
+      mistakesToRecord,
+    };
+  }
+
+  let questionsToScore: {
+    id: string;
+    number: number;
+    prompt: string;
+    typeId?: string;
+    typeLabel?: string;
+    correctAnswer: string;
+    acceptedVariants?: string[];
+    wordLimitRule?: string;
+    maxWords?: number;
+    allowNumber?: boolean;
+    maxNumbers?: number;
+    explanation: string;
+    transcriptTimestamp: string;
+  }[] = [];
+
+  if (assessmentType === "full_listening_mock") {
+    // Collect all 40 questions across all 4 parts
+    questionsToScore = LISTENING_PARTS.flatMap((p) => p.questions);
+  } else if (partNumber && partNumber >= 1 && partNumber <= 4) {
+    questionsToScore = LISTENING_PARTS[partNumber - 1].questions;
+  } else {
+    // Check if answers match LISTENING_PARTS question IDs (lq-1 to lq-40)
+    const hasPartQuestions = Object.keys(answers).some((k) =>
+      LISTENING_PARTS.some((p) => p.questions.some((q) => q.id === k))
+    );
+    if (hasPartQuestions) {
+      const matchingParts = LISTENING_PARTS.filter((p) =>
+        p.questions.some((q) => answers[q.id] !== undefined)
+      );
+      if (matchingParts.length === 1) {
+        questionsToScore = matchingParts[0].questions;
+      } else if (matchingParts.length > 1) {
+        questionsToScore = matchingParts.flatMap((p) => p.questions);
+      } else {
+        questionsToScore = LISTENING_PARTS[0].questions;
+      }
+    } else {
+      // Fallback to legacy LISTENING_ACTIVITY questions
+      questionsToScore = LISTENING_ACTIVITY.questions.map((q) => ({
+        id: q.id,
+        number: q.number,
+        prompt: q.prompt,
+        correctAnswer: q.correctAnswer,
+        explanation: q.explanation,
+        transcriptTimestamp: q.transcriptTimestamp,
+        wordLimitRule: q.type === "Form Completion" ? "ONE WORD ONLY" : undefined,
+      }));
+    }
+  }
+
   let correctCount = 0;
+  let unansweredCount = 0;
   const questionResults = [];
   const mistakesToRecord = [];
 
-  for (const q of LISTENING_ACTIVITY.questions) {
+  for (const q of questionsToScore) {
     const rawStudent = (answers[q.id] || "").trim();
-    const isCorrect = rawStudent.toLowerCase() === q.correctAnswer.toLowerCase();
+    if (!rawStudent) {
+      unansweredCount++;
+    }
 
-    if (isCorrect) correctCount++;
-    else if (rawStudent) {
+    const validation = validateListeningAnswer(rawStudent, {
+      correctAnswer: q.correctAnswer,
+      acceptedVariants: q.acceptedVariants,
+      wordLimitRule: q.wordLimitRule,
+      maxWords: q.maxWords,
+      allowNumber: q.allowNumber,
+      maxNumbers: q.maxNumbers,
+      typeId: q.typeId,
+    });
+
+    const isCorrect = validation.isCorrect;
+    if (isCorrect) {
+      correctCount++;
+    } else if (rawStudent) {
+      const errorTag = validation.wordLimitExceeded
+        ? "word limit breach"
+        : q.typeId === "form_completion"
+        ? "spelling"
+        : isNumericToken(rawStudent)
+        ? "number format"
+        : "distractor trap";
+
       mistakesToRecord.push({
         skill: "listening" as const,
-        errorTag: q.type === "Form Completion" ? "spelling" : "inference trap",
+        errorTag,
         questionPrompt: q.prompt,
         studentAnswer: rawStudent,
         correctAnswer: q.correctAnswer,
@@ -136,22 +281,50 @@ export function evaluateListeningSubmission(
       isCorrect,
       explanation: q.explanation,
       transcriptTimestamp: q.transcriptTimestamp,
+      wordCount: validation.wordCount,
+      wordLimitExceeded: validation.wordLimitExceeded,
+      statusMessage: validation.statusMessage,
     });
   }
 
-  const total = LISTENING_ACTIVITY.questions.length;
-  const percentage = Math.round((correctCount / total) * 100);
+  const maxScore = questionsToScore.length;
+  const total = maxScore;
+  const accuracy = maxScore > 0 ? Math.round((correctCount / maxScore) * 100) : 0;
 
-  let estimatedBand = 4.0;
-  if (correctCount === 3) estimatedBand = 8.0;
-  else if (correctCount === 2) estimatedBand = 6.5;
-  else if (correctCount === 1) estimatedBand = 5.5;
+  // Strict IELTS Scoring Gating:
+  // ONLY full 40-question simulations award an indicative band score.
+  // Diagnostic and sectional practice with fewer than 40 questions MUST return estimatedBand: null
+  // and confidenceLabel: "insufficient_evidence".
+  let estimatedBand: number | null = null;
+  let confidenceLabel: "supported" | "insufficient_evidence" = "insufficient_evidence";
+
+  if (assessmentType === "full_listening_mock" && maxScore === 40) {
+    const bandCalc = getListeningBandFromScore(correctCount);
+    estimatedBand = bandCalc.band;
+    confidenceLabel = bandCalc.confidenceLabel;
+  }
+
+  const statusMessage =
+    assessmentType === "full_listening_mock" && maxScore === 40
+      ? `Full Listening Mock Result: ${correctCount} / 40 (Band ${estimatedBand?.toFixed(1) ?? "—"})`
+      : assessmentType === "sectional_practice"
+      ? `Part ${partNumber || 1} Practice Result: ${correctCount} / ${maxScore} correct (${accuracy}% accuracy)`
+      : `Diagnostic Result: ${correctCount} / ${maxScore} correct (${accuracy}% accuracy)`;
 
   return {
     score: correctCount,
+    maxScore,
     total,
-    percentage,
+    correctCount,
+    unansweredCount,
+    accuracy,
+    percentage: accuracy,
     estimatedBand,
+    confidenceLabel,
+    assessmentType,
+    partNumber,
+    statusMessage,
+    isUnofficial: true,
     questionResults,
     mistakesToRecord,
   };
@@ -378,7 +551,7 @@ export async function persistPracticeAttempt(
     answers: Record<string, unknown>;
     rawScore?: number | null;
     maxScore?: number | null;
-    assessmentType?: "diagnostic" | "sectional_practice" | "full_reading_mock";
+    assessmentType?: "diagnostic" | "sectional_practice" | "full_reading_mock" | "full_listening_mock";
     estimatedBand: number | null;
     feedbackText?: string;
     rubricJson?: unknown;
@@ -426,9 +599,10 @@ export async function persistPracticeAttempt(
 
     // 3. Persist score in scores table (calibrated confidence_label)
     // Speaking drills without acoustic phoneme alignment provide partial diagnostic criteria only (no complete overall band)
-    // Diagnostic / sectional reading drills with partial sets also provide insufficient_evidence for complete overall band
+    // Diagnostic / sectional reading or listening drills with partial sets also provide insufficient_evidence for complete overall band
     const confidenceLabel =
-      data.skill === "speaking" || (data.skill === "reading" && data.estimatedBand === null)
+      data.skill === "speaking" ||
+      ((data.skill === "reading" || data.skill === "listening") && data.estimatedBand === null)
         ? "insufficient_evidence"
         : data.skill === "writing"
         ? "limited"

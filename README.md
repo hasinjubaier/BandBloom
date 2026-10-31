@@ -3,7 +3,7 @@
 > **Official Repository Documentation**  
 > **Architecture Version:** 2026.1 (Full-Stack Next.js 16 + PostgreSQL/pgvector Backend + Student Portal)  
 > **Framework:** Next.js 16.4.2 (App Router, Turbopack, Partial Prerendering) &bull; React 19.3 &bull; TypeScript 5.9 &bull; Tailwind CSS v4  
-> **Database:** PostgreSQL 16+ with `pgvector` &bull; Redis 7 &bull; Native `pg` Connection Pooling (8 SQL Migrations)  
+> **Database:** PostgreSQL 16+ with `pgvector` &bull; Redis 7 &bull; Native `pg` Connection Pooling (9 SQL Migrations)  
 > **Python Service Layer:** Python 3.10+ &bull; SQLAlchemy 2.0 &bull; Alembic  
 > **Repository:** [https://github.com/hasinjubaier/BandBloom.git](https://github.com/hasinjubaier/BandBloom.git)
 
@@ -50,15 +50,16 @@ BandBloom reproduces the ergonomics of the official computer-delivered IELTS exa
 - **Full-Stack Application Core**: Production-ready Next.js 16 App Router application compiled with Turbopack, supporting **49 compiled routes** (26 static pages, 2 partial prerender dynamic routes, and 21 dynamic server API endpoints) guarded by edge middleware.
 - **Dedicated Student Portal**: [`PortalShell.tsx`](file:///d:/Project/IELTS%20SaaS/apps/web/src/components/portal/PortalShell.tsx) providing a unified 14-item navigation suite across Overview, Core IELTS Skills, AI & Learning Tools, and Account management, complete with fixed desktop sidebar, mobile drawer, band goal tracking, and safe logout flow.
 - **Reading Module Architecture**: Dedicated test-type aware learning and evaluation hub [`ReadingModuleView.tsx`](file:///d:/Project/IELTS%20SaaS/apps/web/src/components/portal/ReadingModuleView.tsx) and [`reading-module-data.ts`](file:///d:/Project/IELTS%20SaaS/apps/web/src/lib/reading-module-data.ts) featuring all 14 official IELTS question formats, TFNG vs YNNG distinction, strict word limit rules, matching option reuse controls, and server-side content gating.
+- **Listening Module Architecture**: Dedicated standard 4-part practice and assessment hub [`ListeningModuleView.tsx`](file:///d:/Project/IELTS%20SaaS/apps/web/src/components/portal/ListeningModuleView.tsx) and [`listening-module-data.ts`](file:///d:/Project/IELTS%20SaaS/apps/web/src/lib/listening-module-data.ts) featuring all 13 official IELTS listening question formats, 3 operating modes (Learning, Timed, and Full Simulation), synchronized timestamped transcripts, calibrated audio playback, indicative raw-score conversions (Band 9.0 to 4.0), and server-side content gating.
 - **Practice Hub**: Fully integrated 4-skill practice suite [`apps/web/src/app/practice/page.tsx`](file:///d:/Project/IELTS%20SaaS/apps/web/src/app/practice/page.tsx) with paragraph-level evidence mapping for Reading, listening audio drills with browser synthesis fallback, 2:1 Task 2:1 writing band weighting, and audio-disclosed Speaking Part 2 evaluation.
 - **Mock Test Centre**: Refactored exam centre [`apps/web/src/app/mock-centre/page.tsx`](file:///d:/Project/IELTS%20SaaS/apps/web/src/app/mock-centre/page.tsx) and simulator [`/mock-centre/exam`](file:///d:/Project/IELTS%20SaaS/apps/web/src/app/mock-centre/exam/page.tsx) with strict Full Mock vs Sectional separation, server-authoritative countdown timers, and pre-submission answer-key security.
 - **Adaptive Study Plan**: Personalized weekly study planner [`study-plan.service.ts`](file:///d:/Project/IELTS%20SaaS/apps/web/src/server/services/study-plan.service.ts) enforcing aggregate daily study-time limits, task rescheduling with day capacity checks, mistake notebook error tag prioritization, and reflection history persistence.
 - **Results & Progress**: Dual-mode score reporting [`apps/web/src/app/results/page.tsx`](file:///d:/Project/IELTS%20SaaS/apps/web/src/app/results/page.tsx) and [`[id]/page.tsx`](file:///d:/Project/IELTS%20SaaS/apps/web/src/app/results/[id]/page.tsx) separating raw accuracy diagnostic drills from calibrated official band mock reports.
 - **Edge Middleware & Security**: [`middleware.ts`](file:///d:/Project/IELTS%20SaaS/apps/web/src/middleware.ts) protecting all student portal routes and APIs, preventing unauthenticated access, sanitizing open redirects with [`redirect.ts`](file:///d:/Project/IELTS%20SaaS/apps/web/src/lib/redirect.ts), and enforcing cross-student tenant isolation.
 - **Backend Service Layer**: Modular server architecture in [`apps/web/src/server/services/`](file:///d:/Project/IELTS%20SaaS/apps/web/src/server/services/) comprising 9 dedicated domain services: `mock.service.ts`, `practice.service.ts`, `dashboard.service.ts`, `notebook.service.ts`, `study-plan.service.ts`, `vocabulary.service.ts`, `tutor.service.ts`, `profile.service.ts`, and `session.service.ts`.
-- **Database Architecture**: Comprehensive PostgreSQL 16 schema consisting of **24 normalized relational tables** across **8 migration scripts**, `pgvector` semantic vector indexing, connection pooling with slow-query profiling, and Docker Compose orchestration.
+- **Database Architecture**: Comprehensive PostgreSQL 16 schema consisting of **24 normalized relational tables** across **9 migration scripts**, `pgvector` semantic vector indexing, connection pooling with slow-query profiling, and Docker Compose orchestration.
 - **Python SQLAlchemy Model Suite**: Parallel declarative models in [`apps/api/src/db/models/`](file:///d:/Project/IELTS%20SaaS/apps/api/src/db/models/) with Alembic migration scaffolding and unit tests (`tests/test_database.py`).
-- **Automated Verification**: Comprehensive test harness featuring **64 automated tests** across 7 test suites, validating assessment type gating, pre-submission answer-key sanitization, 14 question formats, 2:1 writing band weights, and study plan scheduling constraints.
+- **Automated Verification**: Comprehensive test harness featuring **72 automated tests** across 8 test suites, validating assessment type gating, pre-submission answer-key sanitization, 14 reading formats, 13 listening formats, 2:1 writing band weights, and study plan scheduling constraints.
 
 ---
 
@@ -101,6 +102,52 @@ BandBloom reproduces the ergonomics of the official computer-delivered IELTS exa
 - **Server-Side Content Gating**:
   - Full reading simulations require strictly 40 distinct valid questions across 3 passages/sections.
   - Partial diagnostic sets (< 40 questions) are honestly labeled and blocked from generating calibrated official band scores.
+
+### Listening Module & Learning Hub ([`ListeningModuleView.tsx`](file:///d:/Project/IELTS%20SaaS/apps/web/src/components/portal/ListeningModuleView.tsx))
+- **Academic and General Training Parity**:
+  - In strict compliance with official IELTS specifications, the Listening test is **100% identical** for both Academic and General Training candidates in recording content, question formats, duration, and indicative band boundaries.
+  - Standard 4-part structure totaling 40 questions (~30 minutes listening time + 2 minutes review in CD-IELTS):
+    - *Part 1: Social Context Dialogue* (e.g., Tenancy Registration; two speakers, everyday transaction, name/number spelling).
+    - *Part 2: Social Context Monologue* (e.g., Sports Centre Facility Tour; single speaker, community or local interest).
+    - *Part 3: Educational / Training Discussion* (e.g., Offshore Wind Turbine Engineering; 2–4 speakers discussing an assignment or research project).
+    - *Part 4: Academic Lecture Monologue* (e.g., Marine Bioacoustics and Ocean Noise Pollution; academic monologue on a scientific or scholarly topic).
+- **Indicative Raw Score Conversion Guide**:
+  - Calibrated raw-to-band scoring table (Band 9.0: 39–40 correct, Band 8.0: 35–36, Band 7.0: 30–31, Band 6.0: 23–25, down to Band 4.0: 11–12).
+  - Prominent Cambridge English / IDP / British Council official equating disclosure explaining that exact boundary marks fluctuate across live test versions.
+- **Complete 13 IELTS Listening Question Formats**:
+  Every official IELTS listening format is supported with step-by-step strategies, distractor traps, and interactive micro-drills:
+  1. *Form Completion*: Everyday transactions with names, telephone numbers, and alphanumeric postcodes.
+  2. *Note Completion*: Hierarchical lecture or briefing notes under thematic headings.
+  3. *Table Completion*: Categorized tabular data extraction across multiple columns.
+  4. *Flow-chart Completion*: Sequential process steps with directional arrows and stage markers.
+  5. *Summary Completion*: Cohesive paragraph summaries with strict word-limit constraints.
+  6. *Sentence Completion*: Gap-fill items maintaining grammatical syntax and contextual meaning.
+  7. *Short-Answer Questions*: Factual audio extracts answering concrete WH-questions.
+  8. *Multiple Choice (Single Answer)*: 3- or 4-option items navigating speaker qualification and distractor traps.
+  9. *Multiple Choice (Multiple Answers)*: Pick-two or pick-three items with set-based letter normalization.
+  10. *Matching Features*: Linking speakers, theories, or options from a curated reference box.
+  11. *Plan Labelling*: Indoor floor plans and architectural layout navigation.
+  12. *Map Labelling*: Geographic navigation using compass directions (North, South-West) and landmarks.
+  13. *Diagram Labelling*: Technical mechanisms or biological process diagrams with callout pointers.
+- **Calibrated Audio Player & Provenance Transparency**:
+  - Web Audio API and SpeechSynthesis fallback with British, Australian, and North American voice profiles.
+  - Transparent provenance labeling: `"Original BandBloom Synthetic Practice Audio"`, preventing deceptive native speaker claims.
+  - Interactive playback modes:
+    - *Mode A (Learning Mode)*: Full playback controls, timeline scrub, play/pause, variable speed (0.75x, 1x, 1.25x), instant hints, and synchronized timestamped transcripts.
+    - *Mode B (Timed Practice)*: Calibrated section drills with official 30-second question preview countdown and 2-minute review countdown.
+    - *Mode C (Exam Simulation)*: Strict CD-IELTS one-play audio enforcement (scrubbing, pausing, and replay disabled; speed locked to 1.0x; answers reviewed strictly after submission).
+- **Advanced Validation Engine ([`listening-module-data.ts`](file:///d:/Project/IELTS%20SaaS/apps/web/src/lib/listening-module-data.ts))**:
+  - Case-insensitive, whitespace-trimmed, and punctuation-normalized comparisons.
+  - Strict word limit enforcement (`ONE WORD ONLY`, `NO MORE THAN TWO WORDS AND/OR A NUMBER`, `ONE NUMBER ONLY`); answers exceeding limits receive 0 marks regardless of content.
+  - Hyphenated word counting rules (`energy-efficient`, `south-west` count strictly as 1 word).
+  - Spelled-out number word vs digit equivalence (`18` == `18th` == `eighteenth`, `two` == `2`).
+  - Set-based normalization for multi-choice letter selections (`A, C` == `C, A` == `A,C`).
+- **Server-Side Content Gating & Honest Diagnostics**:
+  - `checkFullListeningMockEligibility` validates that full listening mocks contain strictly 40 distinct valid questions across 4 parts with positive allocated marks and no duplicates.
+  - Partial diagnostic drills (< 40 questions) strictly return `estimatedBand: null` and `confidenceLabel: "insufficient_evidence"`, preventing fabricated band scores.
+- **Mistake Notebook & Study Plan Integration**:
+  - Automatic error tagging (*spelling error*, *word limit breach*, *distractor trap*, *missed plural/singular*, *number transcription*).
+  - Deep-linked audio timestamps and transcript segments saved directly to [`/mistakes`](file:///d:/Project/IELTS%20SaaS/apps/web/src/app/mistakes/page.tsx) and prioritized in [`/study-plan`](file:///d:/Project/IELTS%20SaaS/apps/web/src/app/study-plan/page.tsx).
 
 ### Practice Hub ([`/practice`](file:///d:/Project/IELTS%20SaaS/apps/web/src/app/practice/page.tsx))
 - **Reading Lab**: Delivers Academic and General Training practice passages with instant paragraph-level evidence mapping, explanation notes, and mistake notebook integration.
@@ -315,9 +362,11 @@ d:\Project\IELTS SaaS
 │       ├── 005_study_plan_unique_active.sql   # Study plan unique active constraint per student
 │       ├── 006_practice_hub_seeds.sql         # Practice Hub lab exams and initial sections
 │       ├── 007_mock_centre_refactor.sql       # Full mock normalization and GT full mock seeds
-│       └── 008_reading_module_seeds.sql       # 14 reading question types, options, and lab links
+│       ├── 008_reading_module_seeds.sql       # 14 reading question types, options, and lab links
+│       └── 009_listening_module_seeds.sql     # 4 calibrated listening parts (40 Qs), media assets, options
 │
 └── tests/                                     # Comprehensive verification test suites
+    ├── listening_module_architecture.test.mjs # Academic/GT parity, 13 listening types, audio provenance, full gating
     ├── reading_security_matrix.test.mjs       # Server gating, bypass matrix, pre-submission security
     ├── reading_module_architecture.test.mjs   # Profile stream separation, 14 question types, TFNG/YNNG
     ├── reading_functional_integrity.test.mjs  # Full simulation lifecycle, timers, persistence
@@ -365,7 +414,7 @@ docker compose -f infra/docker/docker-compose.yml up -d
 ```
 
 ### 5. Apply Database Migrations
-Apply all 8 migration scripts in sequential order:
+Apply all 9 migration scripts in sequential order:
 ```bash
 docker exec -i bandbloom-postgres psql -U bandbloom_user -d bandbloom_db < infra/migrations/001_initial_schema.sql
 docker exec -i bandbloom-postgres psql -U bandbloom_user -d bandbloom_db < infra/migrations/002_seed_data.sql
@@ -375,6 +424,7 @@ docker exec -i bandbloom-postgres psql -U bandbloom_user -d bandbloom_db < infra
 docker exec -i bandbloom-postgres psql -U bandbloom_user -d bandbloom_db < infra/migrations/006_practice_hub_seeds.sql
 docker exec -i bandbloom-postgres psql -U bandbloom_user -d bandbloom_db < infra/migrations/007_mock_centre_refactor.sql
 docker exec -i bandbloom-postgres psql -U bandbloom_user -d bandbloom_db < infra/migrations/008_reading_module_seeds.sql
+docker exec -i bandbloom-postgres psql -U bandbloom_user -d bandbloom_db < infra/migrations/009_listening_module_seeds.sql
 ```
 
 ### 6. Seed Demo Account Passwords
@@ -559,7 +609,7 @@ sequenceDiagram
 
 ## 11. Database and Data Model
 
-The database schema consists of **24 normalized relational tables** defined across **8 sequential migration files** in [`infra/migrations/`](file:///d:/Project/IELTS%20SaaS/infra/migrations/):
+The database schema consists of **26 normalized relational tables** defined across **9 sequential migration files** in [`infra/migrations/`](file:///d:/Project/IELTS%20SaaS/infra/migrations/):
 
 ### Migration History
 1. `001_initial_schema.sql`: Core schema (22 tables: `users`, `profiles`, `exams`, `exam_sections`, `questions`, `question_options`, `attempts`, `responses`, `scores`, `feedback`, `recordings`, `consents`, `study_plans`, `mistake_notes`, `content_sources`, `content_chunks`, `audit_logs`). Stored functions: `ielts_round_band`, `ielts_calculate_overall_band`.
@@ -570,6 +620,7 @@ The database schema consists of **24 normalized relational tables** defined acro
 6. `006_practice_hub_seeds.sql`: Version-controlled Practice Hub Lab exams and sections (`11111111-1111-1111-1111-111111111111` Academic Reading Lab, `...1112` GT Reading Lab, `...2222` Listening Lab, `...3333` Writing Evaluator, `...4444` Speaking Lab).
 7. `007_mock_centre_refactor.sql`: Mock Centre normalization and General Training Full Mock 2 (`99999999-9999-9999-9999-999999999992`).
 8. `008_reading_module_seeds.sql`: 14 IELTS Reading question types, calibrated academic & general training questions, and option fixtures.
+9. `009_listening_module_seeds.sql`: 4 calibrated listening parts (40 questions), 4 separate section records (`bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbb11` to `...14`), 4 published local audio assets with physical `.wav` binaries, `audio_transcripts` table with timestamped speaker segments, and `attempt_playback_states` table for server-authoritative single-play tracking in simulation mode.
 
 ### Core Architectural Invariants
 - **One-Active-Attempt Rule**: Partial unique index on `attempts(user_id, exam_id) WHERE status = 'in_progress'` strictly prevents concurrent duplicate exam attempts.
@@ -594,6 +645,8 @@ All server-side business logic resides in 9 dedicated modular services in [`apps
   [`ieltsCalculateOverallBand`](file:///d:/Project/IELTS%20SaaS/apps/web/src/server/services/mock.service.ts) averages all 4 component bands (Listening, Reading, Writing, Speaking) and applies Section 5.3 rounding. Returns `null` if any component is missing.
 - **Full Reading Mock Eligibility Gating**:
   [`checkFullReadingMockEligibility`](file:///d:/Project/IELTS%20SaaS/apps/web/src/server/services/mock.service.ts) strictly validates that full reading mocks contain exactly 40 distinct valid questions, no duplicate IDs, at least 3 distinct passages/sections, matching stream modules, positive allocated marks, and complete answer keys.
+- **Full Listening Mock Eligibility Gating**:
+  [`checkFullListeningMockEligibility`](file:///d:/Project/IELTS%20SaaS/apps/web/src/server/services/mock.service.ts) strictly validates that full listening mocks contain exactly 40 distinct scoreable questions, no duplicate IDs, positive allocated marks, and complete answer keys.
 - **Server-Side Assessment Type Enforcement**:
   [`startExamAttempt`](file:///d:/Project/IELTS%20SaaS/apps/web/src/server/services/mock.service.ts) derives authoritative classification from the database, blocks diagnostic spoofing on full mock exams, validates client stream consistency, and prevents starting incomplete exams as full mocks.
 - **Pre-Submission Answer-Key Sanitization**:
@@ -601,7 +654,7 @@ All server-side business logic resides in 9 dedicated modular services in [`apps
 
 ### 2. Practice Service ([`practice.service.ts`](file:///d:/Project/IELTS%20SaaS/apps/web/src/server/services/practice.service.ts))
 - **Reading Evaluation**: Evaluates answers against passage questions, maps paragraph evidence, records mistake notes, and sets `estimatedBand: null` with `confidenceLabel: "insufficient_evidence"` for diagnostic sets.
-- **Listening Evaluation**: Validates form-filling and completion items against accepted spellings.
+- **Listening Evaluation**: Evaluates 13 official IELTS listening question types with strict word limits, hyphenated word counting, spelling variant normalization, number-word vs digit equivalence (`18` == `18th` == `eighteenth`), distractor trap error tagging, and returns `estimatedBand: null` with `confidenceLabel: "insufficient_evidence"` for sectional/diagnostic sets (< 40 questions).
 - **Writing Evaluation**: Strictly enforces the official **2:1 Task 2 to Task 1 examiner weighting**.
 - **Speaking Evaluation**: Evaluates candidate speech against official criteria (Fluency, Lexical Resource, Grammar) with transparent educational diagnostic disclosures.
 
@@ -662,12 +715,13 @@ flowchart TD
 
 ## 14. Testing and Code Quality
 
-BandBloom maintains an exhaustive automated verification suite with **64 automated tests** across 7 test suites, plus Python database model tests:
+BandBloom maintains an exhaustive automated verification suite with **72 automated tests** across 8 test suites, plus Python database model tests:
 
 ### 1. Automated Test Suites
 Execute the complete test suite:
 ```bash
-node --test tests/reading_security_matrix.test.mjs \
+node --test tests/listening_module_architecture.test.mjs \
+            tests/reading_security_matrix.test.mjs \
             tests/reading_module_architecture.test.mjs \
             tests/reading_functional_integrity.test.mjs \
             tests/practice_hub.test.mjs \
@@ -677,6 +731,15 @@ node --test tests/reading_security_matrix.test.mjs \
 ```
 
 #### Test Suite Breakdown:
+- [`tests/listening_module_architecture.test.mjs`](file:///d:/Project/IELTS%20SaaS/tests/listening_module_architecture.test.mjs) (8 tests):
+  - Academic vs General Training parity (identical 4 parts, 40 questions, raw-to-band table, audio provenance label).
+  - Complete 13 IELTS Listening Question Types library with strategies and interactive micro-drills.
+  - `validateListeningAnswer` engine: word limits (`ONE WORD ONLY`, `NO MORE THAN TWO WORDS`), hyphenated words, spelling variants, number-word equivalents (`18` == `18th` == `eighteenth`), and letter sorting (`A, C` == `A,C`).
+  - Database seeding integrity (migration 009: 4 media assets, 40 questions, options, section mapping).
+  - Server-side full mock content gating (40 questions required, diagnostic returns `estimatedBand: null` and `confidenceLabel: "insufficient_evidence"`).
+  - Sectional single-skill exam categorization in `mock.service.ts` (ensuring sectional lab is not mislabeled as full mock).
+  - Practice API evaluation (`evaluate_listening` action, scoring, error tags, mistake notebook persistence).
+  - Pre-submission security (correct answers stripped in `GET /api/exams/[id]`).
 - [`tests/reading_security_matrix.test.mjs`](file:///d:/Project/IELTS%20SaaS/tests/reading_security_matrix.test.mjs) (10 tests):
   - Server-side assessment type gating & bypass prevention (omitted, unknown, spoofed diagnostic, stream mismatch, 404).
   - Pre-submission answer-key sanitization for `GET /api/exams/[id]` and `GET /api/attempts/[id]`.
@@ -740,7 +803,7 @@ The Next.js application in `apps/web` is optimized for modern edge and serverles
 - **Environment Variables**: Configure the variables documented in [Section 8](#8-environment-variables).
 
 ### Database Infrastructure
-Deploy PostgreSQL 16 with the `vector` extension enabled, then apply the 8 migrations in sequential order:
+Deploy PostgreSQL 16 with the `vector` extension enabled, then apply the 9 migrations in sequential order:
 ```bash
 psql -h <host> -U <user> -d <dbname> -f infra/migrations/001_initial_schema.sql
 psql -h <host> -U <user> -d <dbname> -f infra/migrations/002_seed_data.sql
@@ -750,6 +813,7 @@ psql -h <host> -U <user> -d <dbname> -f infra/migrations/005_study_plan_unique_a
 psql -h <host> -U <user> -d <dbname> -f infra/migrations/006_practice_hub_seeds.sql
 psql -h <host> -U <user> -d <dbname> -f infra/migrations/007_mock_centre_refactor.sql
 psql -h <host> -U <user> -d <dbname> -f infra/migrations/008_reading_module_seeds.sql
+psql -h <host> -U <user> -d <dbname> -f infra/migrations/009_listening_module_seeds.sql
 ```
 
 ---
@@ -771,6 +835,7 @@ psql -h <host> -U <user> -d <dbname> -f infra/migrations/008_reading_module_seed
 
 ## 17. Security, Ethics & Privacy
 
+- **Audio Provenance & Synthetic Disclosure**: All Listening audio recordings and micro-drills are explicitly labeled as `"Original BandBloom Synthetic Practice Audio"` with authentic regional accent indicators (British, Australian, North American), completely eliminating deceptive native speaker claims.
 - **Audio Consent & Retention**: Audio recorded during Speaking simulations requires explicit learner authorization. Audio records support soft deletion (`deleted_at`) and automated expiration.
 - **Transcript vs Audio Scoring Honesty**: Browser speech recognition transcriptions are clearly disclosed as partial educational diagnostics rather than official audio-based pronunciation evaluations.
 - **Content Gating & Score Integrity**: The platform never fabricates official band scores from incomplete practice sets (< 40 questions). Diagnostics honestly report raw score accuracy and `estimatedBand: null`.
@@ -792,9 +857,10 @@ psql -h <host> -U <user> -d <dbname> -f infra/migrations/008_reading_module_seed
    - `docs(scope): ...` for documentation updates
    - `refactor(scope): ...` for architectural improvements
 3. **Manual Git Workflow Policy**: The developer maintains strict control over all Git staging, commits, and pushes. Automated tools must leave changes unstaged and uncommitted.
-4. **Verification**: Always run all 7 test suites, Python tests, TypeScript compilation, and production build prior to submitting changes:
+4. **Verification**: Always run all 8 test suites, Python tests, TypeScript compilation, and production build prior to submitting changes:
    ```bash
-   node --test tests/reading_security_matrix.test.mjs \
+   node --test tests/listening_module_architecture.test.mjs \
+               tests/reading_security_matrix.test.mjs \
                tests/reading_module_architecture.test.mjs \
                tests/reading_functional_integrity.test.mjs \
                tests/practice_hub.test.mjs \

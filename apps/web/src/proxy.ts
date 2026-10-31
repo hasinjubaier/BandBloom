@@ -105,9 +105,9 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
-     * - public assets with extensions (.svg, .png, .jpg, .jpeg, .webp, .ico, .css, .js)
+     * - public assets with extensions (.svg, .png, .jpg, .jpeg, .webp, .ico, .css, .js, .wav, .mp3, .ogg, .m4a)
      */
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|webp|ico|css|js)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|webp|ico|css|js|wav|mp3|ogg|m4a)$).*)",
   ],
 };
 
