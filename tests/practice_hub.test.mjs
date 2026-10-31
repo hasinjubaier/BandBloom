@@ -178,7 +178,8 @@ test("Requirement 3: Academic Reading Lab evaluation, score calculation, and par
   assert.strictEqual(evalResult.total, 4);
   assert.strictEqual(evalResult.score, 4);
   assert.strictEqual(evalResult.percentage, 100);
-  assert.strictEqual(evalResult.estimatedBand, 9);
+  assert.strictEqual(evalResult.estimatedBand, null, "Diagnostic 4-question sets must not fabricate Band 9.0; estimatedBand must be null");
+  assert.strictEqual(evalResult.confidenceLabel, "insufficient_evidence");
   assert.strictEqual(evalResult.questionResults.length, 4);
 
   // Verify paragraph evidence mapping
@@ -202,7 +203,9 @@ test("Requirement 3: Academic Reading Lab evaluation, score calculation, and par
     [data.attemptId]
   );
   assert.strictEqual(scoreRow.rows.length, 1);
-  assert.strictEqual(Number(scoreRow.rows[0].estimated_band), 9);
+  assert.strictEqual(scoreRow.rows[0].estimated_band, null, "Diagnostic 4-question sets must store null estimated_band in scores table");
+  assert.strictEqual(Number(scoreRow.rows[0].raw_score), 4);
+  assert.strictEqual(scoreRow.rows[0].confidence_label, "insufficient_evidence");
 });
 
 test("Requirement 4: General Training Reading Lab (Workplace notices, TFNG contradiction vs Not Given)", async () => {
@@ -233,7 +236,8 @@ test("Requirement 4: General Training Reading Lab (Workplace notices, TFNG contr
   const evalResult = data.evaluation;
   assert.strictEqual(evalResult.total, 4);
   assert.strictEqual(evalResult.score, 2);
-  assert.strictEqual(evalResult.estimatedBand, 6.0);
+  assert.strictEqual(evalResult.estimatedBand, null, "Diagnostic 4-question sets must not fabricate band score; estimatedBand must be null");
+  assert.strictEqual(evalResult.confidenceLabel, "insufficient_evidence");
 
   // Verify rq-gt-1: student answered TRUE, correct is FALSE
   const gt1 = evalResult.questionResults.find((it) => it.questionId === "rq-gt-1");

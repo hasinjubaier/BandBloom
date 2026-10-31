@@ -4,6 +4,7 @@ import React, { use, Suspense } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { useSearchParams } from "next/navigation";
+import ReadingModuleView from "@/components/portal/ReadingModuleView";
 import {
   BookOpen,
   Headphones,
@@ -172,6 +173,10 @@ function SkillModuleContent({
 
   if (!info) {
     notFound();
+  }
+
+  if (normalizedSkill === "reading") {
+    return <ReadingModuleView />;
   }
 
   const isGT = testType === "general_training";

@@ -148,8 +148,14 @@ export async function getStudentDashboardSummary(
   const inProgressAttempt = moduleAttempts.find((a) => a.status === "in_progress") || null;
 
   // 3. Compute independent skill-specific practice counts and latest evaluated scores
-  // Only count an activity for a skill when that skill was actually scored/evaluated
-  const readingAttempts = completedAttempts.filter((a) => a.readingScore !== null);
+  // Only count an activity for a skill when that skill was actually scored/evaluated.
+  // Diagnostic sets (which have insufficient questions for calibrated bands) must NEVER fabricate official band scores.
+  const readingAttempts = completedAttempts.filter(
+    (a) => a.readingScore !== null && a.assessmentType !== "diagnostic"
+  );
+  const diagnosticReadingAttempts = completedAttempts.filter(
+    (a) => a.assessmentType === "diagnostic" && a.rawScore !== null
+  );
   const listeningAttempts = completedAttempts.filter((a) => a.listeningScore !== null);
   const writingAttempts = completedAttempts.filter((a) => a.writingScore !== null);
   const speakingAttempts = completedAttempts.filter((a) => a.speakingScore !== null);
@@ -158,7 +164,10 @@ export async function getStudentDashboardSummary(
   const latestListening = listeningAttempts[0]?.listeningScore ?? null;
   const latestWriting = writingAttempts[0]?.writingScore ?? null;
   const latestSpeaking = speakingAttempts[0]?.speakingScore ?? null;
-  const latestOverall = completedAttempts.find((a) => a.overallBand !== null)?.overallBand ?? null;
+  const latestOverall =
+    completedAttempts.find(
+      (a) => a.overallBand !== null && a.assessmentType !== "diagnostic"
+    )?.overallBand ?? null;
 
   // 4. Fetch Study Plan in User Timezone
   const plan = await getStudentStudyPlan(userId, timezone);
@@ -347,12 +356,17 @@ export async function getStudentDashboardSummary(
       confidenceLabel: latestOverall
         ? "Diagnostic Estimate (Unofficial)"
         : "Pending First Practice Test",
-      completedExamsCount: completedAttempts.length,
+      completedExamsCount: completedAttempts.filter((a) => a.assessmentType !== "diagnostic").length,
       skills: {
         reading: {
           band: latestReading,
-          practiceCount: readingAttempts.length,
-          label: latestReading !== null ? `Band ${latestReading.toFixed(1)}` : "Not evaluated yet",
+          practiceCount: readingAttempts.length + diagnosticReadingAttempts.length,
+          label:
+            latestReading !== null
+              ? `Band ${latestReading.toFixed(1)}`
+              : diagnosticReadingAttempts.length > 0
+              ? `Diagnostic (${diagnosticReadingAttempts[0].rawScore}/${diagnosticReadingAttempts[0].maxScore || 4})`
+              : "Not evaluated yet",
         },
         listening: {
           band: latestListening,

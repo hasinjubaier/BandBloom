@@ -74,10 +74,19 @@ export interface SpeakingCueCardData {
 }
 
 export interface ReadingEvaluationResult {
+  assessmentType: "diagnostic" | "sectional_practice" | "full_reading_mock";
+  stream: "academic" | "general_training";
   score: number;
+  maxScore: number;
   total: number;
+  correctCount: number;
+  unansweredCount: number;
+  accuracy: number;
   percentage: number;
-  estimatedBand: number;
+  estimatedBand: number | null;
+  confidenceLabel: "supported" | "limited" | "insufficient_evidence";
+  statusMessage: string;
+  isUnofficial: boolean;
   questionResults: {
     questionId: string;
     number: number;

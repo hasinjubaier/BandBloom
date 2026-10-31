@@ -27,7 +27,7 @@ export async function POST(request: Request) {
   try {
     const user = await requireAuth(request);
     const body = await request.json();
-    const { examId } = body;
+    const { examId, assessmentType, stream, testType } = body;
 
     if (!examId) {
       return NextResponse.json(
@@ -36,7 +36,12 @@ export async function POST(request: Request) {
       );
     }
 
-    const { attemptId, deadlineAt } = await startExamAttempt(user.id, examId);
+    const { attemptId, deadlineAt } = await startExamAttempt(
+      user.id,
+      examId,
+      assessmentType,
+      stream || testType
+    );
 
     return NextResponse.json({
       success: true,
@@ -46,9 +51,26 @@ export async function POST(request: Request) {
     });
   } catch (error: unknown) {
     const err = error as { status?: number; message?: string };
+    const isClientError =
+      err.message?.includes("eligible") ||
+      err.message?.includes("requires") ||
+      err.message?.includes("required") ||
+      err.message?.includes("Full Reading Mock") ||
+      err.message?.includes("Full Mock") ||
+      err.message?.includes("not found") ||
+      err.message?.includes("mismatch") ||
+      err.message?.includes("Invalid assessment") ||
+      err.message?.includes("Cannot start");
+    const status =
+      err.status ||
+      (isClientError
+        ? err.message?.includes("not found")
+          ? 404
+          : 400
+        : 500);
     return NextResponse.json(
       { success: false, error: err.message || "Failed to start exam attempt." },
-      { status: err.status || 500 }
+      { status }
     );
   }
 }

@@ -25,6 +25,10 @@ interface ResultData {
     status: string;
     startedAt: string;
     submittedAt: string | null;
+    assessmentType?: "diagnostic" | "sectional_practice" | "full_reading_mock" | "full_mock";
+    rawScore?: number | null;
+    maxScore?: number | null;
+    accuracy?: number | null;
   };
   exam: {
     id: string;
@@ -138,7 +142,18 @@ function DetailedResultContent({
     );
   }
 
-  if (attempt.status === "submitted" && (scores.overall === null || scores.overall === undefined)) {
+  const isDiagnostic =
+    attempt.assessmentType === "diagnostic" ||
+    exam.title.toLowerCase().includes("diagnostic");
+
+  const hasAnyEvaluatedSkill =
+    scores.reading !== null ||
+    scores.listening !== null ||
+    scores.writing !== null ||
+    scores.speaking !== null ||
+    (isDiagnostic && attempt.rawScore !== null);
+
+  if (attempt.status === "submitted" && !hasAnyEvaluatedSkill) {
     return (
       <div className="p-8 sm:p-12 rounded-3xl bg-white dark:bg-[#123C3A] border border-[#D4E8E3] dark:border-[#205653] text-center space-y-4 max-w-lg mx-auto my-12 shadow-xs">
         <div className="w-12 h-12 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-600 flex items-center justify-center mx-auto">
@@ -179,7 +194,11 @@ function DetailedResultContent({
         <div className="space-y-2">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#25A995]/15 text-[#25A995] text-xs font-bold uppercase tracking-wider">
             <Award className="w-3.5 h-3.5" />
-            <span>Official Diagnostic Score Report</span>
+            <span>
+              {isDiagnostic
+                ? "Diagnostic Performance Report"
+                : "Official Diagnostic Score Report"}
+            </span>
           </div>
           <h2 className="text-2xl font-extrabold text-[#123C3A] dark:text-[#F4FAF8]">
             {exam.title}
@@ -191,16 +210,30 @@ function DetailedResultContent({
           </div>
         </div>
 
-        {/* Big Overall Band Display */}
+        {/* Big Overall Display */}
         <div className="p-6 rounded-3xl bg-white dark:bg-[#123C3A] border border-[#D4E8E3] dark:border-[#205653] text-center shadow-sm shrink-0 min-w-[180px]">
           <div className="text-4xl font-black text-[#25A995]">
-            {formatBandDisplay(scores.overall)}
+            {scores.overall !== null && scores.overall !== undefined
+              ? `Band ${scores.overall.toFixed(1)}`
+              : isDiagnostic && attempt.rawScore !== null
+              ? `${attempt.rawScore}/${attempt.maxScore || 4}`
+              : "—"}
           </div>
           <div className="text-[10px] font-bold text-[#67839A] dark:text-[#A0C5C1] uppercase tracking-wider mt-1">
-            Overall Practice Band
+            {isDiagnostic ? "Raw Accuracy Score" : "Overall Practice Band"}
           </div>
         </div>
       </section>
+
+      {/* Diagnostic Drill Honest Disclosure */}
+      {isDiagnostic && (
+        <div className="p-4 rounded-2xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-xs text-amber-800 dark:text-amber-300 flex items-start gap-2.5">
+          <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-amber-600" />
+          <p>
+            <strong>Diagnostic Drill Disclosure:</strong> Short diagnostic sets provide objective accuracy metrics ({attempt.rawScore ?? 0}/{attempt.maxScore || 4}) rather than official IELTS band calibrations. Standard full 40-question simulations across 3 passages are required to calibrate an official IELTS band score.
+          </p>
+        </div>
+      )}
 
       {/* 4 Skill Score Breakdown Grid */}
       <section className="space-y-4" aria-labelledby="breakdown-heading">
@@ -219,11 +252,17 @@ function DetailedResultContent({
                 Reading
               </span>
               <span className="text-sm font-black text-[#25A995]">
-                {formatBandDisplay(scores.reading)}
+                {scores.reading !== null
+                  ? formatBandDisplay(scores.reading)
+                  : isDiagnostic && attempt.rawScore !== null
+                  ? `${attempt.rawScore}/${attempt.maxScore || 4} (${attempt.accuracy ?? Math.round(((attempt.rawScore || 0) / (attempt.maxScore || 4)) * 100)}%)`
+                  : "Unavailable"}
               </span>
             </div>
             <p className="text-[11px] text-[#67839A] dark:text-[#A0C5C1]">
-              Accurate scanning and TFNG discrimination demonstrated.
+              {isDiagnostic
+                ? "Objective accuracy on targeted reading questions."
+                : "Accurate scanning and TFNG discrimination demonstrated."}
             </p>
           </div>
 

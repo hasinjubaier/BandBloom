@@ -41,8 +41,13 @@ export async function POST(request: Request) {
     }
 
     if (action === "evaluate_reading") {
-      const { answers = {}, stream = "academic", persist = true } = body;
-      const evaluation = evaluateReadingSubmission(answers, stream);
+      const {
+        answers = {},
+        stream = "academic",
+        assessmentType = "diagnostic",
+        persist = true,
+      } = body;
+      const evaluation = evaluateReadingSubmission(answers, stream, assessmentType);
 
       let savedAttemptId: string | null = null;
       if (persist) {
@@ -55,9 +60,22 @@ export async function POST(request: Request) {
           examId,
           skill: "reading",
           answers,
+          rawScore: evaluation.score,
+          maxScore: evaluation.maxScore,
+          assessmentType: evaluation.assessmentType,
           estimatedBand: evaluation.estimatedBand,
-          feedbackText: `Scored ${evaluation.score}/${evaluation.total} (${evaluation.percentage}%) on ${stream} reading drill.`,
+          feedbackText: evaluation.statusMessage,
           rubricJson: evaluation,
+          configSnapshot: {
+            assessmentType: evaluation.assessmentType,
+            stream,
+            rawScore: evaluation.score,
+            maxScore: evaluation.maxScore,
+            correctCount: evaluation.correctCount,
+            unansweredCount: evaluation.unansweredCount,
+            accuracy: evaluation.accuracy,
+            contentVersion: "2026.1",
+          },
           mistakes: evaluation.mistakesToRecord,
         });
         savedAttemptId = res.attemptId;

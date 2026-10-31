@@ -206,7 +206,10 @@ export async function buildAdaptiveCurriculum({
      LEFT JOIN scores s_ls ON s_ls.attempt_id = a.id AND s_ls.skill = 'listening'
      LEFT JOIN scores s_wr ON s_wr.attempt_id = a.id AND s_wr.skill = 'writing'
      LEFT JOIN scores s_sp ON s_sp.attempt_id = a.id AND s_sp.skill = 'speaking'
-     WHERE a.user_id = $1 AND a.status IN ('submitted', 'evaluated')
+     WHERE a.user_id = $1 
+       AND a.status IN ('submitted', 'evaluated')
+       AND COALESCE(a.config_snapshot->>'assessmentType', '') != 'diagnostic'
+       AND s_ov.estimated_band IS NOT NULL
      ORDER BY a.submitted_at DESC
      LIMIT 1`,
     [userId]

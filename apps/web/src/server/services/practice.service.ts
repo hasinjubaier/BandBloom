@@ -1,6 +1,10 @@
 import { query, withTransaction } from "@/server/db";
 import { ieltsRoundBand } from "./mock.service";
 import {
+  validateReadingAnswer,
+  calculateIndicativeReadingBand,
+} from "@/lib/reading-module-data";
+import {
   ACADEMIC_READING_PASSAGE,
   GT_READING_PASSAGE,
   LISTENING_ACTIVITY,
@@ -16,16 +20,25 @@ export * from "@/lib/practice-data";
 
 export function evaluateReadingSubmission(
   answers: Record<string, string>,
-  stream: "academic" | "general_training"
+  stream: "academic" | "general_training",
+  assessmentType: "diagnostic" | "sectional_practice" | "full_reading_mock" = "diagnostic"
 ): ReadingEvaluationResult {
   const passage = stream === "academic" ? ACADEMIC_READING_PASSAGE : GT_READING_PASSAGE;
   let correctCount = 0;
+  let unansweredCount = 0;
   const questionResults = [];
   const mistakesToRecord = [];
 
   for (const q of passage.questions) {
     const rawStudent = (answers[q.id] || "").trim();
-    const isCorrect = rawStudent.toUpperCase() === q.correctAnswer.toUpperCase();
+    if (!rawStudent) {
+      unansweredCount++;
+    }
+    const validation = validateReadingAnswer(rawStudent, {
+      correctAnswer: q.correctAnswer,
+      typeId: q.type === "True/False/Not Given" ? "tfng" : "completion",
+    });
+    const isCorrect = validation.isCorrect;
 
     if (isCorrect) correctCount++;
     else if (rawStudent) {
@@ -52,21 +65,41 @@ export function evaluateReadingSubmission(
     });
   }
 
-  const total = passage.questions.length;
-  const percentage = Math.round((correctCount / total) * 100);
+  const maxScore = passage.questions.length;
+  const total = maxScore;
+  const accuracy = Math.round((correctCount / maxScore) * 100);
 
-  // Calibrated Band Conversion for 4-question drill
-  let estimatedBand = 4.0;
-  if (correctCount === 4) estimatedBand = 9.0;
-  else if (correctCount === 3) estimatedBand = 7.5;
-  else if (correctCount === 2) estimatedBand = 6.0;
-  else if (correctCount === 1) estimatedBand = 5.0;
+  // Phase 2 & 3: For diagnostic or sectional practice, bandEstimate MUST BE NULL.
+  // Tiny question sets cannot legitimately calibrate an official IELTS band score.
+  const estimatedBand: number | null =
+    assessmentType === "full_reading_mock" && maxScore === 40
+      ? calculateIndicativeReadingBand(correctCount, stream, 40)
+      : null;
+
+  const confidenceLabel =
+    estimatedBand !== null ? ("supported" as const) : ("insufficient_evidence" as const);
+
+  const statusMessage =
+    assessmentType === "diagnostic"
+      ? `Diagnostic Result: ${correctCount} / ${maxScore} correct (${accuracy}% accuracy)`
+      : assessmentType === "sectional_practice"
+      ? `Sectional Practice Result: ${correctCount} / ${maxScore} correct (${accuracy}% accuracy)`
+      : `Full Reading Mock Result: ${correctCount} / 40 (Band ${estimatedBand?.toFixed(1) ?? "—"})`;
 
   return {
+    assessmentType,
+    stream,
     score: correctCount,
+    maxScore,
     total,
-    percentage,
+    correctCount,
+    unansweredCount,
+    accuracy,
+    percentage: accuracy,
     estimatedBand,
+    confidenceLabel,
+    statusMessage,
+    isUnofficial: true,
     questionResults,
     mistakesToRecord,
   };
@@ -343,9 +376,13 @@ export async function persistPracticeAttempt(
     examId: string;
     skill: "reading" | "listening" | "writing" | "speaking";
     answers: Record<string, unknown>;
+    rawScore?: number | null;
+    maxScore?: number | null;
+    assessmentType?: "diagnostic" | "sectional_practice" | "full_reading_mock";
     estimatedBand: number | null;
     feedbackText?: string;
     rubricJson?: unknown;
+    configSnapshot?: Record<string, unknown>;
     mistakes?: {
       skill: "reading" | "listening";
       errorTag: string;
@@ -357,12 +394,19 @@ export async function persistPracticeAttempt(
   }
 ): Promise<{ attemptId: string; saved: boolean }> {
   return withTransaction(async (client) => {
+    const configSnapshot = data.configSnapshot || {
+      assessmentType: data.assessmentType || "diagnostic",
+      rawScore: data.rawScore ?? null,
+      maxScore: data.maxScore ?? null,
+      contentVersion: "2026.1",
+    };
+
     // 1. Create completed attempt in attempts table
     const attRes = await client.query<{ id: string }>(
-      `INSERT INTO attempts (user_id, exam_id, status, started_at, submitted_at, deadline_at)
-       VALUES ($1, $2, 'submitted', clock_timestamp() - interval '20 minutes', clock_timestamp(), clock_timestamp() + interval '1 hour')
+      `INSERT INTO attempts (user_id, exam_id, status, started_at, submitted_at, deadline_at, config_snapshot)
+       VALUES ($1, $2, 'submitted', clock_timestamp() - interval '20 minutes', clock_timestamp(), clock_timestamp() + interval '1 hour', $3)
        RETURNING id`,
-      [userId, data.examId]
+      [userId, data.examId, JSON.stringify(configSnapshot)]
     );
     const attemptId = attRes.rows[0].id;
 
@@ -382,18 +426,22 @@ export async function persistPracticeAttempt(
 
     // 3. Persist score in scores table (calibrated confidence_label)
     // Speaking drills without acoustic phoneme alignment provide partial diagnostic criteria only (no complete overall band)
+    // Diagnostic / sectional reading drills with partial sets also provide insufficient_evidence for complete overall band
     const confidenceLabel =
-      data.skill === "speaking"
+      data.skill === "speaking" || (data.skill === "reading" && data.estimatedBand === null)
         ? "insufficient_evidence"
         : data.skill === "writing"
         ? "limited"
         : "supported";
 
     await client.query(
-      `INSERT INTO scores (attempt_id, skill, estimated_band, scoring_version, confidence_label, is_unofficial)
-       VALUES ($1, $2, $3, '2026.1', $4, true)
-       ON CONFLICT (attempt_id, skill) DO UPDATE SET estimated_band = EXCLUDED.estimated_band, confidence_label = EXCLUDED.confidence_label`,
-      [attemptId, data.skill, data.estimatedBand, confidenceLabel]
+      `INSERT INTO scores (attempt_id, skill, raw_score, estimated_band, scoring_version, confidence_label, is_unofficial)
+       VALUES ($1, $2, $3, $4, '2026.1', $5, true)
+       ON CONFLICT (attempt_id, skill) DO UPDATE SET 
+         raw_score = EXCLUDED.raw_score,
+         estimated_band = EXCLUDED.estimated_band, 
+         confidence_label = EXCLUDED.confidence_label`,
+      [attemptId, data.skill, data.rawScore ?? null, data.estimatedBand, confidenceLabel]
     );
 
     // Also persist overall band: if component band is null (partial diagnostic), overall must be NULL with insufficient_evidence

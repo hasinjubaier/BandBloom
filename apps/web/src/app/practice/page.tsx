@@ -982,7 +982,10 @@ export default function PracticeHubPage() {
                   <div>
                     <span className="text-xs font-bold uppercase text-[#25A995]">Drill Score</span>
                     <h3 className="text-xl font-extrabold text-[#123C3A] dark:text-[#F4FAF8]">
-                      {readingResult.score} / {readingResult.total} ({readingResult.percentage}%) — Estimated Band {readingResult.estimatedBand.toFixed(1)}
+                      {readingResult.score} / {readingResult.total} ({readingResult.percentage}%)
+                      {readingResult.estimatedBand !== null
+                        ? ` — Estimated Band ${readingResult.estimatedBand.toFixed(1)}`
+                        : " — Diagnostic (No Full Band Awarded)"}
                     </h3>
                   </div>
                   <button

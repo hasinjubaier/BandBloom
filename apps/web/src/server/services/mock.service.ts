@@ -48,6 +48,10 @@ export interface ExamAttemptSummary {
   listeningScore: number | null;
   writingScore: number | null;
   speakingScore: number | null;
+  assessmentType?: "diagnostic" | "sectional_practice" | "full_reading_mock" | "full_mock";
+  rawScore?: number | null;
+  maxScore?: number | null;
+  accuracy?: number | null;
 }
 
 /**
@@ -482,8 +486,10 @@ export async function getStudentAttempts(userId: string): Promise<ExamAttemptSum
       started_at: string;
       submitted_at: string | null;
       deadline_at: string | null;
+      config_snapshot: Record<string, unknown> | null;
       overall_band: number | null;
       reading_score: number | null;
+      reading_raw_score: number | null;
       listening_score: number | null;
       writing_score: number | null;
       speaking_score: number | null;
@@ -497,8 +503,10 @@ export async function getStudentAttempts(userId: string): Promise<ExamAttemptSum
          a.started_at, 
          a.submitted_at,
          a.deadline_at,
+         a.config_snapshot,
          MAX(CASE WHEN s.skill = 'overall' THEN s.estimated_band END) AS overall_band,
          MAX(CASE WHEN s.skill = 'reading' THEN s.estimated_band END) AS reading_score,
+         MAX(CASE WHEN s.skill = 'reading' THEN s.raw_score END) AS reading_raw_score,
          MAX(CASE WHEN s.skill = 'listening' THEN s.estimated_band END) AS listening_score,
          MAX(CASE WHEN s.skill = 'writing' THEN s.estimated_band END) AS writing_score,
          MAX(CASE WHEN s.skill = 'speaking' THEN s.estimated_band END) AS speaking_score
@@ -506,26 +514,60 @@ export async function getStudentAttempts(userId: string): Promise<ExamAttemptSum
        JOIN exams e ON a.exam_id = e.id
        LEFT JOIN scores s ON a.id = s.attempt_id
        WHERE a.user_id = $1
-       GROUP BY a.id, a.exam_id, e.title, e.test_type, a.status, a.started_at, a.submitted_at, a.deadline_at
+       GROUP BY a.id, a.exam_id, e.title, e.test_type, a.status, a.started_at, a.submitted_at, a.deadline_at, a.config_snapshot
        ORDER BY a.started_at DESC`,
       [userId]
     );
 
-    return res.rows.map((r) => ({
-      id: r.id,
-      examId: r.exam_id,
-      examTitle: r.title,
-      testType: r.test_type,
-      status: r.status,
-      startedAt: r.started_at,
-      submittedAt: r.submitted_at,
-      deadlineAt: r.deadline_at,
-      overallBand: r.overall_band !== null ? Number(r.overall_band) : null,
-      readingScore: r.reading_score !== null ? Number(r.reading_score) : null,
-      listeningScore: r.listening_score !== null ? Number(r.listening_score) : null,
-      writingScore: r.writing_score !== null ? Number(r.writing_score) : null,
-      speakingScore: r.speaking_score !== null ? Number(r.speaking_score) : null,
-    }));
+    return res.rows.map((r) => {
+      const snap =
+        typeof r.config_snapshot === "object" && r.config_snapshot !== null
+          ? r.config_snapshot
+          : {};
+      const assessmentType =
+        (snap.assessmentType as ExamAttemptSummary["assessmentType"]) ||
+        (r.title.toLowerCase().includes("diagnostic") || r.title.toLowerCase().includes("lab")
+          ? "diagnostic"
+          : "sectional_practice");
+      const rawScore =
+        r.reading_raw_score !== null && r.reading_raw_score !== undefined
+          ? Number(r.reading_raw_score)
+          : typeof snap.rawScore === "number"
+          ? snap.rawScore
+          : null;
+      const maxScore =
+        typeof snap.maxScore === "number"
+          ? snap.maxScore
+          : rawScore !== null
+          ? 4
+          : null;
+      const accuracy =
+        typeof snap.accuracy === "number"
+          ? snap.accuracy
+          : rawScore !== null && maxScore
+          ? Math.round((rawScore / maxScore) * 100)
+          : null;
+
+      return {
+        id: r.id,
+        examId: r.exam_id,
+        examTitle: r.title,
+        testType: r.test_type,
+        status: r.status,
+        startedAt: r.started_at,
+        submittedAt: r.submitted_at,
+        deadlineAt: r.deadline_at,
+        overallBand: r.overall_band !== null ? Number(r.overall_band) : null,
+        readingScore: r.reading_score !== null ? Number(r.reading_score) : null,
+        listeningScore: r.listening_score !== null ? Number(r.listening_score) : null,
+        writingScore: r.writing_score !== null ? Number(r.writing_score) : null,
+        speakingScore: r.speaking_score !== null ? Number(r.speaking_score) : null,
+        assessmentType,
+        rawScore,
+        maxScore,
+        accuracy,
+      };
+    });
   } catch (error) {
     console.error("[Mock Service]: Failed to fetch student attempts:", error);
     throw error;
@@ -557,8 +599,9 @@ export async function getAttemptById(
       started_at: string;
       submitted_at: string | null;
       deadline_at: string | null;
+      config_snapshot: Record<string, unknown> | null;
     }>(
-      `SELECT id, exam_id, user_id, status, started_at, submitted_at, deadline_at
+      `SELECT id, exam_id, user_id, status, started_at, submitted_at, deadline_at, config_snapshot
        FROM attempts
        WHERE id = $1 AND user_id = $2`,
       [attemptId, userId]
@@ -569,6 +612,29 @@ export async function getAttemptById(
 
     const exam = await getExamById(attemptRow.exam_id);
     if (!exam) return null;
+
+    // Defense-in-depth pre-submission sanitization:
+    // Ensure exam object never carries answer keys, explanations, or private marking metadata
+    const sanitizedSections = exam.sections.map((sec) => ({
+      ...sec,
+      questions: sec.questions.map((q) => ({
+        id: q.id,
+        skill: q.skill,
+        type: q.type,
+        prompt: q.prompt,
+        contextText: q.contextText,
+        options: q.options?.map((o) => ({
+          id: o.id,
+          optionText: o.optionText,
+          optionOrder: o.optionOrder,
+        })),
+      })),
+    }));
+
+    const sanitizedExam: ExamDetail = {
+      ...exam,
+      sections: sanitizedSections,
+    };
 
     const respRes = await query<{
       question_id: string;
@@ -585,9 +651,11 @@ export async function getAttemptById(
 
     const scoresRes = await query<{
       skill: string;
-      estimated_band: number;
+      raw_score: number | null;
+      estimated_band: number | null;
+      confidence_label: string | null;
     }>(
-      `SELECT skill, estimated_band FROM scores WHERE attempt_id = $1`,
+      `SELECT skill, raw_score, estimated_band, confidence_label FROM scores WHERE attempt_id = $1`,
       [attemptId]
     );
 
@@ -605,18 +673,64 @@ export async function getAttemptById(
       speaking: null,
     };
 
-    for (const s of scoresRes.rows) {
-      if (s.skill in scores) {
-        scores[s.skill as keyof typeof scores] = Number(s.estimated_band);
+    let readingRawScore: number | null = null;
+
+    // For in_progress attempts, evaluated scores must NEVER be exposed
+    if (attemptRow.status !== "in_progress") {
+      for (const s of scoresRes.rows) {
+        if (s.skill in scores) {
+          scores[s.skill as keyof typeof scores] =
+            s.estimated_band !== null && s.estimated_band !== undefined
+              ? Number(s.estimated_band)
+              : null;
+        }
+        if (s.skill === "reading") {
+          readingRawScore =
+            s.raw_score !== null && s.raw_score !== undefined
+              ? Number(s.raw_score)
+              : null;
+        }
       }
     }
+
+    const snap =
+      typeof attemptRow.config_snapshot === "object" && attemptRow.config_snapshot !== null
+        ? attemptRow.config_snapshot
+        : {};
+
+    const assessmentType =
+      (snap.assessmentType as ExamAttemptSummary["assessmentType"]) ||
+      (sanitizedExam.title.toLowerCase().includes("diagnostic")
+        ? "diagnostic"
+        : "sectional_practice");
+
+    const rawScore =
+      readingRawScore !== null
+        ? readingRawScore
+        : typeof snap.rawScore === "number"
+        ? snap.rawScore
+        : null;
+
+    const maxScore =
+      typeof snap.maxScore === "number"
+        ? snap.maxScore
+        : rawScore !== null
+        ? 4
+        : null;
+
+    const accuracy =
+      typeof snap.accuracy === "number"
+        ? snap.accuracy
+        : rawScore !== null && maxScore
+        ? Math.round((rawScore / maxScore) * 100)
+        : null;
 
     return {
       attempt: {
         id: attemptRow.id,
         examId: attemptRow.exam_id,
-        examTitle: exam.title,
-        testType: exam.testType,
+        examTitle: sanitizedExam.title,
+        testType: sanitizedExam.testType,
         status: attemptRow.status,
         startedAt: attemptRow.started_at,
         submittedAt: attemptRow.submitted_at,
@@ -626,8 +740,12 @@ export async function getAttemptById(
         listeningScore: scores.listening,
         writingScore: scores.writing,
         speakingScore: scores.speaking,
+        assessmentType,
+        rawScore,
+        maxScore,
+        accuracy,
       },
-      exam,
+      exam: sanitizedExam,
       responses,
       scores,
       serverNow: new Date().toISOString(),
@@ -637,12 +755,231 @@ export async function getAttemptById(
   }
 }
 
+export async function checkFullReadingMockEligibility(examId: string): Promise<{
+  eligible: boolean;
+  questionCount: number;
+  reason?: string;
+}> {
+  // 1. Verify exam existence and active status
+  const examRes = await query<{
+    id: string;
+    title: string;
+    test_type: "academic" | "general_training";
+    status: string;
+  }>(
+    `SELECT id, title, test_type, status FROM exams WHERE id = $1`,
+    [examId]
+  );
+
+  if (examRes.rows.length === 0 || examRes.rows[0].status !== "active") {
+    return {
+      eligible: false,
+      questionCount: 0,
+      reason: "Exam not found or inactive.",
+    };
+  }
+
+  const exam = examRes.rows[0];
+
+  // 2. Query reading sections, questions, allocated marks, modules, and options
+  const questionsRes = await query<{
+    section_id: string;
+    order_index: number;
+    instructions: string | null;
+    question_id: string;
+    allocated_marks: string;
+    skill: string;
+    module: string;
+    type: string;
+    status: string;
+    prompt: string;
+    context_text: string | null;
+    option_count: string;
+    correct_option_count: string;
+  }>(
+    `SELECT 
+       es.id AS section_id,
+       es.order_index,
+       es.instructions,
+       esq.question_id,
+       esq.allocated_marks::text,
+       q.skill,
+       q.module,
+       q.type,
+       q.status,
+       q.prompt,
+       q.context_text,
+       COUNT(qo.id)::int AS option_count,
+       COUNT(CASE WHEN qo.is_correct = true THEN 1 END)::int AS correct_option_count
+     FROM exam_sections es
+     JOIN exam_section_questions esq ON es.id = esq.exam_section_id
+     JOIN questions q ON esq.question_id = q.id
+     LEFT JOIN question_options qo ON q.id = qo.question_id
+     WHERE es.exam_id = $1 AND es.skill = 'reading'
+     GROUP BY es.id, es.order_index, es.instructions, esq.question_id, esq.allocated_marks, q.skill, q.module, q.type, q.status, q.prompt, q.context_text
+     ORDER BY es.order_index ASC`,
+    [examId]
+  );
+
+  const rows = questionsRes.rows;
+  const distinctQuestionIds = new Set(rows.map((r) => r.question_id));
+  const totalAssigned = rows.length;
+  const distinctCount = distinctQuestionIds.size;
+
+  // Check for duplicate questions
+  if (totalAssigned !== distinctCount) {
+    return {
+      eligible: false,
+      questionCount: distinctCount,
+      reason: `Full Reading Mock contains duplicate questions (${distinctCount} distinct out of ${totalAssigned} assigned). Exactly 40 unique questions are required.`,
+    };
+  }
+
+  // Check strictly 40 questions
+  if (distinctCount !== 40) {
+    return {
+      eligible: false,
+      questionCount: distinctCount,
+      reason: `Full Reading Mock requires strictly 40 distinct scoreable questions across 3 passages/sections. This exam currently contains ${distinctCount} question(s) and is only available as diagnostic or sectional practice.`,
+    };
+  }
+
+  // Check stream/module consistency and marking integrity
+  for (const r of rows) {
+    if (r.module !== "both" && r.module !== exam.test_type) {
+      return {
+        eligible: false,
+        questionCount: distinctCount,
+        reason: `Full Reading Mock content mismatch: question ${r.question_id} has stream module '${r.module}' which does not match exam stream '${exam.test_type}'.`,
+      };
+    }
+
+    if (Number(r.allocated_marks) <= 0) {
+      return {
+        eligible: false,
+        questionCount: distinctCount,
+        reason: `Full Reading Mock question ${r.question_id} has invalid allocated marks (${r.allocated_marks}). Must be greater than 0.`,
+      };
+    }
+
+    const requiresOptions = ["multiple_choice", "true_false_not_given", "yes_no_not_given", "matching"];
+    if (requiresOptions.includes(r.type) && Number(r.option_count) > 0 && Number(r.correct_option_count) === 0) {
+      return {
+        eligible: false,
+        questionCount: distinctCount,
+        reason: `Full Reading Mock question ${r.question_id} (${r.type}) is missing a marked correct answer key.`,
+      };
+    }
+  }
+
+  // Check passage/section structural integrity (at least 3 distinct sections or passages)
+  const distinctSections = new Set(rows.map((r) => r.section_id));
+  const distinctPassages = new Set(rows.map((r) => r.context_text).filter(Boolean));
+  if (distinctSections.size < 3 && distinctPassages.size < 3) {
+    return {
+      eligible: false,
+      questionCount: distinctCount,
+      reason: `Full Reading Mock requires 3 distinct passages/sections. Found fewer than 3.`,
+    };
+  }
+
+  return { eligible: true, questionCount: 40 };
+}
+
 export async function startExamAttempt(
   userId: string,
-  examId: string
+  examId: string,
+  requestedAssessmentType?: string,
+  clientStream?: string
 ): Promise<{ attemptId: string; deadlineAt: string }> {
   const exam = await getExamById(examId);
-  if (!exam) throw new Error("Exam not found or inactive.");
+  if (!exam || exam.status !== "active") {
+    const err = new Error("Exam not found or inactive.");
+    (err as { status?: number }).status = 404;
+    throw err;
+  }
+
+  // 1. Validate stream metadata if provided by client
+  if (clientStream) {
+    const normalizedClientStream = clientStream === "general" ? "general_training" : clientStream;
+    if (normalizedClientStream !== exam.testType) {
+      const err = new Error(
+        `Test stream mismatch: Requested stream is '${clientStream}', but exam is configured as '${exam.testType}'.`
+      );
+      (err as { status?: number }).status = 400;
+      throw err;
+    }
+  }
+
+  // 2. Validate requested assessment type
+  const ALLOWED_TYPES = new Set([
+    "diagnostic",
+    "sectional_practice",
+    "full_reading_mock",
+    "full_mock",
+  ]);
+
+  if (requestedAssessmentType && !ALLOWED_TYPES.has(requestedAssessmentType)) {
+    const err = new Error(
+      `Invalid assessment type '${requestedAssessmentType}'. Allowed types: diagnostic, sectional_practice, full_reading_mock, full_mock.`
+    );
+    (err as { status?: number }).status = 400;
+    throw err;
+  }
+
+  // 3. Authoritative classification derived from DB exam configuration
+  const isConfiguredFullMock =
+    exam.category === "full_mock" ||
+    exam.title.toLowerCase().includes("full mock") ||
+    exam.sectionsCount >= 4;
+
+  let finalAssessmentType: "diagnostic" | "sectional_practice" | "full_reading_mock" | "full_mock";
+
+  if (isConfiguredFullMock) {
+    // A database exam configured as a full mock CANNOT be started as a diagnostic or sectional attempt
+    if (
+      requestedAssessmentType === "diagnostic" ||
+      requestedAssessmentType === "sectional_practice"
+    ) {
+      const err = new Error(
+        "Cannot start a full mock exam as a diagnostic attempt. Full mock exams must satisfy full mock eligibility."
+      );
+      (err as { status?: number }).status = 400;
+      throw err;
+    }
+
+    finalAssessmentType = "full_mock";
+
+    // For any full mock containing Reading, strictly enforce content eligibility
+    if (exam.skills.includes("reading")) {
+      const eligibility = await checkFullReadingMockEligibility(examId);
+      if (!eligibility.eligible) {
+        const err = new Error(
+          eligibility.reason || "Exam is not eligible for Full Mock."
+        );
+        (err as { status?: number }).status = 400;
+        throw err;
+      }
+    }
+  } else {
+    // Sectional or diagnostic practice exam
+    if (
+      requestedAssessmentType === "full_mock" ||
+      requestedAssessmentType === "full_reading_mock"
+    ) {
+      const err = new Error(
+        "Cannot start a sectional or diagnostic practice exam as a full mock."
+      );
+      (err as { status?: number }).status = 400;
+      throw err;
+    }
+
+    finalAssessmentType =
+      (requestedAssessmentType as "diagnostic" | "sectional_practice") ||
+      (exam.title.toLowerCase().includes("diagnostic")
+        ? "diagnostic"
+        : "sectional_practice");
+  }
 
   const deadline = new Date(Date.now() + exam.durationMinutes * 60 * 1000);
 
@@ -661,11 +998,17 @@ export async function startExamAttempt(
     };
   }
 
+  const configSnapshot = {
+    assessmentType: finalAssessmentType,
+    stream: exam.testType,
+    contentVersion: "2026.1",
+  };
+
   const res = await query<{ id: string; deadline_at: string }>(
-    `INSERT INTO attempts (user_id, exam_id, status, started_at, deadline_at)
-     VALUES ($1, $2, 'in_progress', clock_timestamp(), $3)
+    `INSERT INTO attempts (user_id, exam_id, status, started_at, deadline_at, config_snapshot)
+     VALUES ($1, $2, 'in_progress', clock_timestamp(), $3, $4)
      RETURNING id, deadline_at`,
-    [userId, examId, deadline.toISOString()]
+    [userId, examId, deadline.toISOString(), JSON.stringify(configSnapshot)]
   );
 
   return {
@@ -708,11 +1051,11 @@ export async function submitExamAttempt(
   attemptId: string
 ): Promise<{
   attemptId: string;
-  overallBand: number;
-  readingScore: number;
-  listeningScore: number;
-  writingScore: number;
-  speakingScore: number;
+  overallBand: number | null;
+  readingScore: number | null;
+  listeningScore: number | null;
+  writingScore: number | null;
+  speakingScore: number | null;
 }> {
   // 1. Verify attempt ownership, active status, and deadline enforcement outside the transaction
   // so that marking an expired attempt as 'abandoned' persists immediately and is not rolled back.
@@ -767,7 +1110,45 @@ export async function submitExamAttempt(
       );
     }
 
-    // 3. Compute diagnostic scores with standard official band rounding
+    // 3. Check attempt snapshot
+    const snapRes = await client.query<{
+      config_snapshot: Record<string, unknown> | null;
+      title: string;
+      test_type: string;
+    }>(
+      `SELECT a.config_snapshot, e.title, e.test_type
+       FROM attempts a
+       JOIN exams e ON a.exam_id = e.id
+       WHERE a.id = $1`,
+      [attemptId]
+    );
+
+    const snap = snapRes.rows[0]?.config_snapshot || {};
+    const assessmentType = snap.assessmentType as string;
+
+    if (assessmentType === "diagnostic") {
+      // Diagnostic sets do not fabricate official IELTS band calibrations
+      await client.query(
+        `INSERT INTO scores (attempt_id, skill, estimated_band, scoring_version, confidence_label, is_unofficial)
+         VALUES 
+           ($1, 'overall', NULL, '2026.1', 'insufficient_evidence', true),
+           ($1, 'reading', NULL, '2026.1', 'insufficient_evidence', true)
+         ON CONFLICT (attempt_id, skill)
+         DO UPDATE SET estimated_band = EXCLUDED.estimated_band, confidence_label = EXCLUDED.confidence_label`,
+        [attemptId]
+      );
+
+      return {
+        attemptId,
+        overallBand: null,
+        readingScore: null,
+        listeningScore: null,
+        writingScore: null,
+        speakingScore: null,
+      };
+    }
+
+    // Standard scoring for full mock or sectional
     const readingScore = 7.5;
     const listeningScore = 7.0;
     const writingScore = 6.5;
