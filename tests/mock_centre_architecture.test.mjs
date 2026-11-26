@@ -21,7 +21,7 @@ import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
-const { Pool } = require("../apps/web/node_modules/pg");
+const { Pool } = require("pg");
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const BASE_URL = process.env.TEST_APP_URL || "http://localhost:3000";

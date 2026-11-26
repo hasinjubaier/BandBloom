@@ -16,8 +16,8 @@ import { createRequire } from "node:module";
 import crypto from "node:crypto";
 
 const require = createRequire(import.meta.url);
-const { Pool } = require("../apps/web/node_modules/pg");
-const bcrypt = require("../apps/web/node_modules/bcryptjs");
+const { Pool } = require("pg");
+const bcrypt = require("bcryptjs");
 
 const pool = new Pool({
   host: process.env.PGHOST || "127.0.0.1",

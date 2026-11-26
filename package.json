@@ -11,5 +11,9 @@
     "start": "npm run start --prefix apps/web",
     "lint": "npm run lint --prefix apps/web",
     "test": "node tests/run_backend_tests.js"
+  },
+  "devDependencies": {
+    "bcryptjs": "^3.0.3",
+    "pg": "^8.23.1"
   }
 }

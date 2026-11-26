@@ -1,4 +1,4 @@
-const { Client } = require("../apps/web/node_modules/pg");
+const { Client } = require("pg");
 
 async function checkDatabase() {
   const client = new Client({

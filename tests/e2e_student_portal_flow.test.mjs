@@ -24,7 +24,7 @@ import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
-const { Pool } = require("../apps/web/node_modules/pg");
+const { Pool } = require("pg");
 
 const BASE_URL = process.env.TEST_APP_URL || "http://localhost:3000";
 

@@ -4,7 +4,7 @@
  */
 
 const assert = require("assert");
-const { Pool } = require("../apps/web/node_modules/pg");
+const { Pool } = require("pg");
 
 // Import production services directly via tsx runtime
 const {
